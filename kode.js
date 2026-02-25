@@ -713,8 +713,25 @@ function updateStatusCuti(idPengajuan, status) {
 
     sheetCuti.getRange(rowIndex + 2, 9).setValue(status);
 
-    // PERUBAHAN: Jika status disetujui, simpan ke sheet Rekapan Cuti
+    // ===== LOGIKA UNTUK PENGGANTI LIBUR =====
+    // Jika status disetujui dan kategorinya Pengganti Libur, update hari digunakan
     if (status === 'Disetujui') {
+      const dataCutiRow = sheetCuti.getRange(rowIndex + 2, 1, 1, 11).getValues()[0];
+      const isPenggantiLibur = dataCutiRow[10]; // Kolom K: marker PENGGANTI
+      const idKaryawan = dataCutiRow[2]; // Kolom C: ID Karyawan
+      const jumlahHari = dataCutiRow[5]; // Kolom F: Jumlah Hari
+      
+      if (isPenggantiLibur === 'PENGGANTI') {
+        Logger.log('Pengganti Libur detected, updating hari digunakan');
+        const updated = updateHariDigunakan(idKaryawan, jumlahHari);
+        if (updated) {
+          Logger.log('✓ Hari digunakan berhasil diupdate');
+        } else {
+          Logger.log('⚠ Gagal mengupdate hari digunakan, tapi pengajuan tetap disetujui');
+        }
+      }
+      
+      // Simpan rekapan cuti otomatis
       simpanRekapanCutiOtomatis(ss);
     }
 
@@ -761,6 +778,71 @@ function updateStatusCuti(idPengajuan, status) {
     return `Status pengajuan ${idPengajuan} berhasil diubah menjadi ${status}.`;
   } catch (e) {
     return "Error: " + e.message;
+  }
+}
+
+// FUNGSI BARU: Update Hari Digunakan saat Pengganti Libur disetujui
+function updateHariDigunakan(idKaryawan, jumlahHari) {
+  try {
+    Logger.log('updateHariDigunakan called for ID: ' + idKaryawan + ', jumlah: ' + jumlahHari);
+    
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheetPengganti = null;
+    
+    try {
+      sheetPengganti = ss.getSheetByName('Pengganti Libur');
+    } catch (e) {
+      Logger.log('Pengganti Libur sheet not found');
+      return false;
+    }
+    
+    if (!sheetPengganti || sheetPengganti.getLastRow() < 2) {
+      Logger.log('Pengganti Libur sheet is empty');
+      return false;
+    }
+    
+    const lastRow = sheetPengganti.getLastRow();
+    const ids = sheetPengganti.getRange("A2:A" + lastRow).getValues().flat();
+    const idToFind = String(idKaryawan).trim();
+    let rowIndex = -1;
+    
+    for (let i = 0; i < ids.length; i++) {
+      if (String(ids[i]).trim() === idToFind) {
+        rowIndex = i;
+        break;
+      }
+    }
+    
+    if (rowIndex === -1) {
+      Logger.log('Employee not found in Pengganti Libur sheet');
+      return false;
+    }
+    
+    // Baca data saat ini
+    const currentData = sheetPengganti.getRange(rowIndex + 2, 1, 1, 6).getValues()[0];
+    const durasiTotal = parseInt(currentData[2]) || 0;
+    const hariDigunakan = parseInt(currentData[3]) || 0;
+    const newHariDigunakan = hariDigunakan + parseInt(jumlahHari);
+    const newSisaHari = durasiTotal - newHariDigunakan;
+    
+    // Validasi: jangan sampai hari digunakan melebihi durasi total
+    if (newHariDigunakan > durasiTotal) {
+      Logger.log('Warning: Hari digunakan (' + newHariDigunakan + ') melebihi durasi total (' + durasiTotal + ')');
+      return false;
+    }
+    
+    // Update sheet dengan data baru
+    sheetPengganti.getRange(rowIndex + 2, 4, 1, 2).setValues([[
+      newHariDigunakan,
+      newSisaHari
+    ]]);
+    
+    Logger.log('✓ Updated Hari Digunakan from ' + hariDigunakan + ' to ' + newHariDigunakan);
+    Logger.log('✓ Updated Sisa Hari: ' + newSisaHari);
+    return true;
+  } catch (e) {
+    Logger.log('Error in updateHariDigunakan: ' + e.message);
+    return false;
   }
 }
 
@@ -1778,11 +1860,25 @@ function getAllPenggantiLibur() {
     try {
       sheetPengganti = ss.getSheetByName('Pengganti Libur');
     } catch (e) {
-      // Sheet belum ada, buat sheet baru
+      // Sheet belum ada, buat sheet baru dengan struktur baru
       sheetPengganti = ss.insertSheet('Pengganti Libur');
-      sheetPengganti.appendRow(['ID Karyawan', 'Nama Karyawan', 'Durasi (Hari)', 'Keterangan']);
-      Logger.log('Created new Pengganti Libur sheet');
+      sheetPengganti.appendRow(['ID Karyawan', 'Nama Karyawan', 'Durasi Total (Hari)', 'Hari Digunakan', 'Sisa Hari', 'Keterangan']);
+      Logger.log('Created new Pengganti Libur sheet with new structure');
       return [];
+    }
+    
+    // Cek dan upgrade struktur sheet jika perlu
+    const headers = sheetPengganti.getRange(1, 1, 1, sheetPengganti.getLastColumn()).getValues()[0];
+    if (headers.length < 6) {
+      // Upgrade sheet: tambah kolom baru jika belum ada
+      if (headers.length === 4) {
+        sheetPengganti.insertColumns(4, 2);
+        sheetPengganti.getRange(1, 4).setValue('Hari Digunakan');
+        sheetPengganti.getRange(1, 5).setValue('Sisa Hari');
+        // Update header kolom 3
+        sheetPengganti.getRange(1, 3).setValue('Durasi Total (Hari)');
+        Logger.log('Upgraded Pengganti Libur sheet structure');
+      }
     }
     
     if (sheetPengganti.getLastRow() < 2) {
@@ -1790,12 +1886,14 @@ function getAllPenggantiLibur() {
       return [];
     }
     
-    const dataPengganti = sheetPengganti.getRange(2, 1, sheetPengganti.getLastRow() - 1, sheetPengganti.getLastColumn()).getValues();
+    const dataPengganti = sheetPengganti.getRange(2, 1, sheetPengganti.getLastRow() - 1, 6).getValues();
     const result = dataPengganti.map(row => ({
       idKaryawan: row[0],
       namaKaryawan: row[1],
-      durasi: row[2],
-      keterangan: row[3]
+      durasiTotal: parseInt(row[2]) || 0,
+      hariDigunakan: parseInt(row[3]) || 0,
+      sisaHari: parseInt(row[4]) || 0,
+      keterangan: row[5] || ''
     }));
     
     Logger.log('getAllPenggantiLibur returning ' + result.length + ' records');
@@ -1896,8 +1994,8 @@ function simpanPenggantiLibur(dataPengganti) {
       if (!sheetPengganti) {
         Logger.log('Sheet "Pengganti Libur" belum ada, membuat baru...');
         sheetPengganti = ss.insertSheet('Pengganti Libur');
-        sheetPengganti.appendRow(['ID Karyawan', 'Nama Karyawan', 'Durasi (Hari)', 'Keterangan']);
-        Logger.log('✓ Sheet "Pengganti Libur" berhasil dibuat');
+        sheetPengganti.appendRow(['ID Karyawan', 'Nama Karyawan', 'Durasi Total (Hari)', 'Hari Digunakan', 'Sisa Hari', 'Keterangan']);
+        Logger.log('✓ Sheet "Pengganti Libur" berhasil dibuat dengan struktur baru');
       } else {
         Logger.log('✓ Sheet "Pengganti Libur" sudah ada');
       }
@@ -1933,10 +2031,14 @@ function simpanPenggantiLibur(dataPengganti) {
     if (existingRowIndex !== -1) {
       // UPDATE
       try {
-        sheetPengganti.getRange(existingRowIndex + 2, 1, 1, 4).setValues([[
+        const hariDigunakan = dataPengganti.hariDigunakan || 0;
+        const sisaHari = dataPengganti.durasi - hariDigunakan;
+        sheetPengganti.getRange(existingRowIndex + 2, 1, 1, 6).setValues([[
           dataPengganti.idKaryawan,
           namaKaryawan,
           dataPengganti.durasi,
+          hariDigunakan,
+          sisaHari,
           dataPengganti.keterangan || ''
         ]]);
         Logger.log('✓ BERHASIL UPDATE record untuk ' + namaKaryawan);
@@ -1948,10 +2050,14 @@ function simpanPenggantiLibur(dataPengganti) {
     } else {
       // INSERT
       try {
+        const hariDigunakan = dataPengganti.hariDigunakan || 0;
+        const sisaHari = dataPengganti.durasi - hariDigunakan;
         sheetPengganti.appendRow([
           dataPengganti.idKaryawan,
           namaKaryawan,
           dataPengganti.durasi,
+          hariDigunakan,
+          sisaHari,
           dataPengganti.keterangan || ''
         ]);
         Logger.log('✓ BERHASIL INSERT record untuk ' + namaKaryawan);
@@ -2123,16 +2229,24 @@ function getPenggantiLiburKaryawan(tokenOrId) {
       return { pengganti: null };
     }
     
-    const dataPengganti = sheetPengganti.getRange(2, 1, sheetPengganti.getLastRow() - 1, sheetPengganti.getLastColumn()).getValues();
+    const dataPengganti = sheetPengganti.getRange(2, 1, sheetPengganti.getLastRow() - 1, 6).getValues();
     
     for (const row of dataPengganti) {
       if (row[0] === idKaryawan) {
+        // Hitung sisa hari jika belum ada
+        let sisaHari = parseInt(row[4]) || 0;
+        if (sisaHari === 0) {
+          sisaHari = parseInt(row[2]) - (parseInt(row[3]) || 0);
+        }
+        
         return {
           pengganti: {
             idKaryawan: row[0],
             namaKaryawan: row[1],
-            durasi: parseInt(row[2]),
-            keterangan: row[3]
+            durasiTotal: parseInt(row[2]),
+            hariDigunakan: parseInt(row[3]) || 0,
+            sisaHari: sisaHari,
+            keterangan: row[5] || ''
           }
         };
       }
@@ -2165,15 +2279,17 @@ function getPenggantiLiburById(idKaryawan) {
       return { error: 'Data Pengganti Libur tidak ditemukan' };
     }
     
-    const dataPengganti = sheetPengganti.getRange(2, 1, sheetPengganti.getLastRow() - 1, sheetPengganti.getLastColumn()).getValues();
+    const dataPengganti = sheetPengganti.getRange(2, 1, sheetPengganti.getLastRow() - 1, 6).getValues();
     
     for (const row of dataPengganti) {
       if (String(row[0]).trim() === String(idKaryawan).trim()) {
         return {
           idKaryawan: row[0],
           namaKaryawan: row[1],
-          durasi: parseInt(row[2]),
-          keterangan: row[3]
+          durasiTotal: parseInt(row[2]),
+          hariDigunakan: parseInt(row[3]) || 0,
+          sisaHari: parseInt(row[4]) || 0,
+          keterangan: row[5] || ''
         };
       }
     }

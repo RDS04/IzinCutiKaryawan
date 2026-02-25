@@ -809,8 +809,16 @@
           <h3><i class="fas fa-gift"></i> Set Libur Tambahan untuk Karyawan</h3>
           <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
             ℹ️ Setelah disimpan, karyawan akan melihat notifikasi libur tambahan di dashboard mereka dan dapat
-            langsung mengambilnya.
+            langsung mengambilnya. Sistem akan otomatis menghitung sisa hari setelah karyawan mengambil hari libur.
           </p>
+          <div style="background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px; margin-bottom: 20px; border-radius: 4px;">
+            <strong style="color: #1976d2;">💡 Cara Kerja:</strong>
+            <ul style="margin: 8px 0; padding-left: 20px; color: #1565c0; font-size: 13px;">
+              <li>Admin mengatur total hari kerja di hari libur yang diperbolehkan (misal: 2 hari)</li>
+              <li>Karyawan bisa mengambilnya secara bertahap (1 hari, lalu 1 hari lagi)</li>
+              <li>Sistem otomatis mengurangi sisa hari saat cuti disetujui</li>
+            </ul>
+          </div>
           <form id="form-pengganti" onsubmit="handleFormPenggantiSubmit(event)">
             <div class="form-group">
               <label for="pengganti-id-karyawan">Nama Karyawan</label>
@@ -840,7 +848,9 @@
           <thead>
             <tr>
               <th>Nama Karyawan</th>
-              <th>Durasi (Hari)</th>
+              <th>Total Hari</th>
+              <th>Hari Digunakan</th>
+              <th>Sisa Hari</th>
               <th>Keterangan</th>
               <th class="aksi-header">Aksi</th>
             </tr>
@@ -911,18 +921,30 @@
   </div>
 
   <div id="modal-edit-pengganti" class="modal">
-    <div class="modal-content" style="width: 90%; max-width: 500px;">
+    <div class="modal-content" style="width: 90%; max-width: 600px;">
       <span class="close-button" onclick="tutupModalEditPengganti()">&times;</span>
-      <h3><i class="fas fa-edit"></i> Edit Pengganti Libur</h3>
+      <h3><i class="fas fa-edit"></i> Edit Pengganti Libur - Tracking Hari</h3>
       <form id="form-edit-pengganti" onsubmit="handleFormEditPenggantiSubmit(event)">
         <input type="hidden" id="edit-pengganti-id-karyawan">
         <div class="form-group">
           <label for="edit-pengganti-nama">Nama Karyawan</label>
           <input type="text" id="edit-pengganti-nama" disabled style="background-color: #f5f5f5; cursor: not-allowed;">
         </div>
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin-bottom: 20px; border-radius: 4px;">
+          <strong style="color: #856404;">📋 Info Hari Kerja:</strong>
+          <div style="margin-top: 8px; font-size: 13px; color: #856404;">
+            <div>Total Hari: <strong id="info-durasi-total">0</strong> hari</div>
+            <div>Hari Sudah Digunakan: <strong id="info-hari-digunakan">0</strong> hari</div>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #ffc107;">
+              Sisa Hari: <strong id="info-sisa-hari" style="color: #28a745; font-size: 16px;">0</strong> hari
+            </div>
+          </div>
+        </div>
         <div class="form-group">
-          <label for="edit-pengganti-durasi">Durasi Libur Tambahan (Hari)</label>
+          <label for="edit-pengganti-durasi">Total Hari Kerja di Hari Libur (Hari)</label>
           <input type="number" id="edit-pengganti-durasi" min="1" max="30" required>
+          <small style="color: #666; display: block; margin-top: 4px;">Update total hari jika ingin mengubah alokasi awal. Sisa hari akan otomatis dihitung.</small>
         </div>
         <div class="form-group">
           <label for="edit-pengganti-keterangan">Keterangan / Alasan</label>
@@ -1938,17 +1960,23 @@
 
       if (!data || data.error || data.length === 0) {
         console.log('No pengganti libur data to display');
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data pengganti libur.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Belum ada data pengganti libur.</td></tr>';
         return;
       }
 
       console.log('Displaying ' + data.length + ' records');
       data.forEach((pengganti, index) => {
         console.log('Row ' + index + ':', pengganti);
+        const durasiTotal = pengganti.durasiTotal || pengganti.durasi || 0;
+        const hariDigunakan = pengganti.hariDigunakan || 0;
+        const sisaHari = pengganti.sisaHari || (durasiTotal - hariDigunakan);
+        
         let row = tbody.insertRow();
         row.innerHTML = `
                     <td>${pengganti.namaKaryawan || '-'}</td>
-                    <td style="text-align: center;"><strong>${pengganti.durasi}</strong></td>
+                    <td style="text-align: center;"><strong>${durasiTotal}</strong></td>
+                    <td style="text-align: center;">${hariDigunakan}</td>
+                    <td style="text-align: center; color: ${sisaHari <= 0 ? '#f44336' : '#4caf50'}; font-weight: bold;">${sisaHari}</td>
                     <td>${pengganti.keterangan}</td>
                     <td class="action-buttons aksi-cell">
                         <button title="Edit" onclick="handleEditPengganti('${pengganti.idKaryawan}')"><i class="fas fa-edit"></i></button>
@@ -2067,11 +2095,21 @@
           return;
         }
         
+        const durasiTotal = data.durasiTotal || 0;
+        const hariDigunakan = data.hariDigunakan || 0;
+        const sisaHari = data.sisaHari || (durasiTotal - hariDigunakan);
+        
         // Set nilai ke form edit
         document.getElementById('edit-pengganti-id-karyawan').value = data.idKaryawan;
         document.getElementById('edit-pengganti-nama').value = data.namaKaryawan;
-        document.getElementById('edit-pengganti-durasi').value = data.durasi;
-        document.getElementById('edit-pengganti-keterangan').value = data.keterangan;
+        document.getElementById('edit-pengganti-durasi').value = durasiTotal;
+        document.getElementById('edit-pengganti-keterangan').value = data.keterangan || '';
+        
+        // Update info tracking hari kerja
+        document.getElementById('info-durasi-total').textContent = durasiTotal;
+        document.getElementById('info-hari-digunakan').textContent = hariDigunakan;
+        document.getElementById('info-sisa-hari').textContent = sisaHari;
+        document.getElementById('info-sisa-hari').style.color = sisaHari <= 0 ? '#f44336' : '#28a745';
         
         // Tampilkan modal
         document.getElementById('modal-edit-pengganti').style.display = 'block';

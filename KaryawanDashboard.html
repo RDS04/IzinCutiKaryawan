@@ -759,6 +759,12 @@
                 console.log('Data karyawan loaded:', data);
                 console.log('Jenis Kelamin:', jenisKelaminGlobal);
                 
+                // Cek apakah Pengganti Libur sudah pernah diambil (menunggu atau disetujui)
+                penggantiLiburSudahDiambil = (data.riwayat || []).some(item => item.jenis === 'Pengganti Libur' && item.status !== 'Ditolak');
+                if (penggantiLiburSudahDiambil) {
+                    console.log('✓ Pengganti Libur sudah pernah diambil atau sedang proses, kategori akan disembunyikan.');
+                }
+                
                 // Load data Pengganti Libur setelah dapat data karyawan
                 google.script.run.withSuccessHandler(pengganti => {
                     console.log('getPenggantiLiburKaryawan response:', pengganti);
@@ -857,7 +863,10 @@
                 
                 let hariText = '';
                 if (data.isPenggantiLibur && penggantiLiburData) {
-                    hariText = `${penggantiLiburData.durasi} hari`;
+                    // Tampilkan sisa hari untuk Pengganti Libur
+                    const sisaHariPengganti = penggantiLiburData.sisaHari || 0;
+                    const durasiTotal = penggantiLiburData.durasiTotal || 0;
+                    hariText = `${sisaHariPengganti} dari ${durasiTotal} hari (tersisa)`;
                 } else if (data.hari === null) {
                     hariText = 'Input Manual';
                 } else {
@@ -923,14 +932,19 @@
             
             // Update judul dan tampilan sisa cuti di card sebelah kiri
             if (kategori.isPenggantiLibur) {
-                // Untuk Pengganti Libur
-                const durasiAktualPengganti = penggantiLiburData && typeof penggantiLiburData.durasi !== 'undefined'
-                    ? penggantiLiburData.durasi
-                    : sisaHari;
-                const labelDurasi = durasiPengganti ? ` - ${durasiPengganti} hari` : '';
-                document.getElementById('judul-sisa-cuti').textContent = `${displayName}${labelDurasi}`;
-                document.getElementById('sisa-cuti').textContent = durasiAktualPengganti;
-                sisaHari = durasiAktualPengganti;
+                // Untuk Pengganti Libur - tampilkan sisa hari yang tersedia
+                const sisaHariPengganti = penggantiLiburData && typeof penggantiLiburData.sisaHari !== 'undefined'
+                    ? penggantiLiburData.sisaHari
+                    : (penggantiLiburData && typeof penggantiLiburData.durasiTotal !== 'undefined'
+                        ? penggantiLiburData.durasiTotal
+                        : sisaHari);
+                const durasiTotal = penggantiLiburData && typeof penggantiLiburData.durasiTotal !== 'undefined'
+                    ? penggantiLiburData.durasiTotal
+                    : 0;
+                document.getElementById('judul-sisa-cuti').textContent = `${displayName} - Sisa Hari Kerja`;
+                document.getElementById('sisa-cuti').textContent = sisaHariPengganti;
+                console.log('Pengganti Libur - Sisa Hari: ' + sisaHariPengganti + ' dari ' + durasiTotal);
+                sisaHari = sisaHariPengganti;
             } else {
                 const judulPrefix = isJumlahKategori ? 'Jumlah' : 'Sisa';
                 document.getElementById('judul-sisa-cuti').textContent = `${judulPrefix} ${displayName}`;
@@ -1200,8 +1214,19 @@
                 document.getElementById('info-kategori-terpilih').style.display = 'none';
                 document.querySelectorAll('.kategori-btn').forEach(btn => btn.classList.remove('active'));
                 kategoriTerpilih = null;
+                
+                // Refresh data karyawan dan Pengganti Libur
                 muatDataKaryawan();
-                initKategoriButtons();
+                
+                // Re-fetch data Pengganti Libur untuk update sisa hari
+                google.script.run.withSuccessHandler(pengganti => {
+                    console.log('Data Pengganti Libur refreshed after pengajuan:', pengganti);
+                    if (pengganti && pengganti.pengganti) {
+                        penggantiLiburData = pengganti.pengganti;
+                        console.log('✓ Pengganti Libur data updated:', penggantiLiburData);
+                    }
+                    initKategoriButtons();
+                }).getPenggantiLiburKaryawan(sessionToken);
             });
         }
 
@@ -1269,11 +1294,6 @@
                     console.log('✓ Jatah Cuti Tahunan (fallback) diupdate di header:', jatahCutiTahunan);
                 }
                 
-                // Cek apakah Pengganti Libur sudah pernah diambil (menunggu atau disetujui)
-                penggantiLiburSudahDiambil = (data.riwayat || []).some(item => item.jenis === 'Pengganti Libur' && item.status !== 'Ditolak');
-                if (penggantiLiburSudahDiambil) {
-                    console.log('Pengganti Libur sudah pernah diambil atau sedang proses, sembunyikan kategori.');
-                }
                 console.log('Data karyawan loaded:', data);
                 document.getElementById('nama-pengguna').textContent = `Selamat Datang, ${data.nama}`;
                 
@@ -1290,7 +1310,7 @@
                     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada riwayat pengajuan.</td></tr>';
                     return;
                 }
-                data.riwayat.forEach(item => {
+                data.riwayat.forEach((item, index) => {
                     let row = tbody.insertRow();
                     
                     // Cari kategori ID dari nama kategori
@@ -1305,7 +1325,30 @@
                     }
                     
                     // Hitung sisa cuti untuk kategori ini
-                    const sisaCutiKat = kategoriId ? hitungSisaCutiKategori(kategoriId) : '-';
+                    let sisaCutiKat = '-';
+                    if (kategoriId) {
+                        if (item.jenis === 'Pengganti Libur') {
+                            // Untuk Pengganti Libur, hitung sisa berdasarkan penggunaan hingga entry ini
+                            if (penggantiLiburData && penggantiLiburData.durasiTotal) {
+                                const durasiTotal = penggantiLiburData.durasiTotal;
+                                
+                                // Hitung jumlah hari yang sudah digunakan (APPROVED) hingga entry ini (include)
+                                let hariDigunakan = 0;
+                                for (let i = 0; i <= index; i++) {
+                                    if (data.riwayat[i].jenis === 'Pengganti Libur' && 
+                                        (data.riwayat[i].status === 'Disetujui' || data.riwayat[i].status === 'Approved')) {
+                                        hariDigunakan += parseInt(data.riwayat[i].lama) || 0;
+                                    }
+                                }
+                                
+                                sisaCutiKat = Math.max(0, durasiTotal - hariDigunakan);
+                            } else {
+                                sisaCutiKat = 0;
+                            }
+                        } else {
+                            sisaCutiKat = hitungSisaCutiKategori(kategoriId);
+                        }
+                    }
                     
                     row.innerHTML = `
                         <td>${kodeRiwayat}</td>
@@ -1385,13 +1428,24 @@
                 if (kategori.isPenggantiLibur) {
                     console.log('Validating Pengganti Libur');
                     const hariDiambil = jumlahHari;
-                    const expected = penggantiLiburData ? penggantiLiburData.durasi : 0;
-                    if (hariDiambil !== expected) {
-                        Swal.fire('Gagal!', `${displayName} harus diambil TEPAT ${expected} hari (hari kerja, skip Sabtu/Minggu). Anda memilih ${hariDiambil} hari.`, 'error');
+                    const sisaHariTersedia = penggantiLiburData ? (penggantiLiburData.sisaHari || 0) : 0;
+                    const durasiTotal = penggantiLiburData ? (penggantiLiburData.durasiTotal || 0) : 0;
+                    
+                    console.log('Pengganti Libur validation:', { hariDiambil, sisaHariTersedia, durasiTotal });
+                    
+                    // Validasi: hari yang diambil tidak boleh melebihi sisa hari tersedia
+                    if (hariDiambil > sisaHariTersedia) {
+                        Swal.fire('Gagal!', `${displayName} - Anda hanya memiliki ${sisaHariTersedia} hari tersisa (dari total ${durasiTotal} hari). Anda mencoba mengambil ${hariDiambil} hari.`, 'error');
                         return;
                     }
+                    
+                    if (sisaHariTersedia <= 0) {
+                        Swal.fire('Gagal!', `${displayName} - Anda tidak memiliki sisa hari kerja. Total hari Anda (${durasiTotal}) telah habis.`, 'error');
+                        return;
+                    }
+                    
                     jumlahHari = hariDiambil;
-                    console.log('✓ Pengganti Libur OK');
+                    console.log('✓ Pengganti Libur OK - Hari diambil:', hariDiambil);
                 } else if (!kategori.cicil && kategori.hari !== null) {
                     console.log('Validating NON-CICIL - STRICT VALIDATION');
                     const hariDiambil = jumlahHari;
