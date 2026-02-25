@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+    /* General Body and Layout */
+    body {
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        margin: 0;
+        background-color: #f4f6f9;
+    }
+
+    .header {
+        background-color: #6842F5;
+        color: white;
+        padding: 20px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .header h1 {
+        margin: 0;
+        font-size: 24px;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .session-info-karyawan {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.9);
+        text-align: right;
+    }
+
+    .session-info-karyawan .session-time {
+        font-weight: bold;
+        font-size: 12px;
+        display: block;
+        margin-top: 5px;
+    }
+
+    .session-info-karyawan .session-time.warning {
+        color: #ffeb3b;
+    }
+
+    .session-info-karyawan .session-time.danger {
+        color: #ff6b6b;
+    }
+
+    #cuti-tahunan-info {
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        display: inline-block;
+        font-size: 13px;
+    }
+
+    .btn-logout-karyawan {
+        padding: 8px 16px;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-logout-karyawan:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .main-wrapper {
+        display: flex;
+    }
+
+    .main-container {
+        padding: 30px;
+        flex-grow: 1;
+    }
+
+    /* Sidebar */
+    .sidebar-karyawan {
+        flex-shrink: 0;
+        width: 240px;
+        background-color: #ffffff;
+        min-height: calc(100vh - 74px);
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .sidebar-menu {
+        list-style: none;
+        padding: 0;
+        margin: 20px 0;
+    }
+
+    .sidebar-menu li a {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        text-decoration: none;
+        color: #555;
+        font-size: 16px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .sidebar-menu li a:hover,
+    .sidebar-menu li a.active {
+        background-color: #F3F0FF;
+        color: #6842F5;
+    }
+
+    .sidebar-menu li a i {
+        margin-right: 15px;
+    }
+
+    /* View Management */
+    .view-karyawan {
+        display: none;
+    }
+
+    .view-karyawan.active {
+        display: block;
+    }
+
+    
+    .card {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .highlight-pulse {
+        animation: pulseHighlight 1.2s ease-in-out 3;
+        box-shadow: 0 0 0 2px rgba(104, 66, 245, 0.15), 0 10px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .card h2 {
+        margin-top: 0;
+        color: #333;
+    }
+    
+    .card-body h5.card-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .card-body p {
+        font-size: 6rem;
+        text-align: center;
+        color: #6f42c1;
+        margin-top: 0;
+        margin-left: 1;
+    }
+
+    
+    #view-password .card {
+        padding: 30px;
+    }
+
+    #view-password .form-group input {
+        padding: 12px;
+        font-size: 17px;
+    }
+
+    #view-password .btn {
+        padding: 14px;
+        font-size: 18px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr; 
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .sisa-cuti-card {
+        text-align: center;
+    }
+
+    .sisa-cuti-card h2 {
+        margin-bottom: 20px;
+    }
+
+    .sisa-cuti-card .angka {
+        font-size: 16em;
+        color: #6842F5;
+        font-weight: bold;
+        line-height: 1;
+        margin-top: 10px;
+        margin-bottom: 5px;
+    }
+    
+    .sisa-cuti-card .satuan {
+        font-size: 1.2em;
+        color: #666;
+    }
+
+    .sisa-cuti-wrapper {
+        display: flex;          
+        justify-content: center;
+        align-items: baseline;  
+        gap: 8px;               
+    }
+
+    /* Form Elements */
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #555;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box;
+        font-size: 16px;
+    }
+
+    .btn {
+        background-color: #6842F5;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background-color 0.2s ease;
+    }
+
+    .btn:hover {
+        background-color: #5A39E0;
+    }
+
+    /* Table Styles */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    th,
+    td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    th {
+        color: #555;
+        font-weight: 600;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Status Indicators */
+    .status {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: 600;
+        text-align: center;
+        display: inline-block;
+    }
+
+    .status-Disetujui,
+    .status-disetujui {
+        background-color: #e8f5e9;
+        color: #4caf50;
+    }
+
+    .status-Ditolak,
+    .status-ditolak {
+        background-color: #ffebee;
+        color: #f44336;
+    }
+
+    .status-Menunggu-Persetujuan,
+    .status-menunggu-persetujuan {
+        background-color: #fff0e1;
+        color: #ff9800;
+    }
+
+    .kategori-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .kategori-btn {
+        padding: 15px;
+        border: 2px solid #e0e0e0;
+        background-color: #fff;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: left;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .kategori-btn:hover {
+        border-color: #6842F5;
+        background-color: #F3F0FF;
+    }
+
+    .kategori-btn.active {
+        border-color: #6842F5;
+        background-color: #6842F5;
+        color: white;
+    }
+
+    /* Highlight kategori full (termasuk weekend) */
+    .kategori-btn.full-weekend {
+        border-color: #ff9800;
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        color: #d84315;
+    }
+
+    .kategori-btn.full-weekend.active {
+        border-color: #ff9800;
+        background: linear-gradient(135deg, #ffb74d 0%, #ff9800 100%);
+        color: #fff;
+    }
+
+    .kategori-btn .jumlah-hari {
+        display: block;
+        font-size: 12px;
+        font-weight: normal;
+        margin-top: 5px;
+        opacity: 0.8;
+    }
+
+    .kategori-btn .sisa-hari {
+        display: block;
+        font-size: 11px;
+        font-weight: normal;
+        margin-top: 3px;
+        opacity: 0.7;
+        font-style: italic;
+    }
+
+    .info-sisa-kategori {
+        background-color: #f0f0f0;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .info-sisa-kategori strong {
+        color: #6842F5;
+    }
+
+    .form-cuti-section {
+        display: none;
+        padding: 20px;
+        background: linear-gradient(135deg, #f8f7ff 0%, #f3f0ff 100%);
+        border-radius: 12px;
+        border: 1px solid #e8e0ff;
+    }
+
+    .form-cuti-section.active {
+        display: block;
+        animation: slideInDown 0.4s ease-out;
+    }
+
+    .upload-dokter-section {
+        display: none;
+        margin-bottom: 18px;
+        padding: 16px;
+        background: linear-gradient(135deg, #fff5e1 0%, #ffe8cc 100%);
+        border-radius: 10px;
+        border: 2px dashed #ff9800;
+    }
+
+    .upload-dokter-section.active {
+        display: block;
+        animation: slideInDown 0.4s ease-out;
+    }
+
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes pulseHighlight {
+        0% { box-shadow: 0 0 0 0 rgba(104, 66, 245, 0.35); }
+        50% { box-shadow: 0 0 0 6px rgba(104, 66, 245, 0.15); }
+        100% { box-shadow: 0 0 0 0 rgba(104, 66, 245, 0.35); }
+    }
+
+    .file-input-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+    }
+
+    .file-input-wrapper input[type=file] {
+        position: absolute;
+        left: -9999px;
+    }
+
+    .file-input-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 18px;
+        background: linear-gradient(135deg, #6842F5 0%, #5832d5 100%);
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        font-size: 15px;
+        box-shadow: 0 4px 12px rgba(104, 66, 245, 0.2);
+    }
+
+    .file-input-label:hover {
+        background: linear-gradient(135deg, #5832d5 0%, #4a2bb5 100%);
+        box-shadow: 0 6px 18px rgba(104, 66, 245, 0.3);
+        transform: translateY(-1px);
+    }
+
+    #nama-file-dokter {
+        display: inline-block;
+        margin-left: 12px;
+        color: #666;
+        font-size: 14px;
+        background: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #e0e0e0;
+    }
+</style>
+</head>
+<body>
+    <div class="header">
+        <h1>Dashboard Cuti</h1>
+        <div class="header-right">
+            <div class="session-info-karyawan">
+                <div>Sesi Aktif</div>
+                <div class="session-time" id="session-timer-karyawan">Memuat...</div>
+            </div>
+            <button class="btn-logout-karyawan" onclick="handleLogoutKaryawan()">Logout</button>
+            <div style="text-align: right;">
+                <h2 id="nama-pengguna" style="margin: 0 0 5px 0;">Memuat...</h2>
+                <div id="cuti-tahunan-info" style="font-size: 13px; color: rgba(255, 255, 255, 0.9); font-weight: 500;">
+                    <span>Jatah Cuti Setahun: </span><strong id="jatah-cuti-tahunan" style="color: #fff9e6; font-size: 14px;">-</strong><span> hari</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="main-wrapper">
+        <nav class="sidebar-karyawan">
+             <ul class="sidebar-menu">
+                <li><a href="#" id="menu-utama" class="active" onclick="event.preventDefault(); showKaryawanView('utama')"><i class="fas fa-home fa-fw"></i> Halaman Utama</a></li>
+                <li><a href="#" id="menu-password" onclick="event.preventDefault(); showKaryawanView('password')"><i class="fas fa-key fa-fw"></i> Ubah Password</a></li>
+            </ul>
+        </nav>
+        <div class="main-container">
+            <div id="view-utama" class="view-karyawan active">
+                
+                <div class="info-grid">
+                    <div class="card sisa-cuti-card">
+                        <h2 id="judul-sisa-cuti">Sisa Cuti </h2>
+                        <div id="sisa-cuti-container">
+                            <p><span id="sisa-cuti" class="angka">0</span> <span class="satuan">Hari</span></p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h2><i class="fas fa-file-alt"></i> Ajukan Cuti Baru</h2>
+                        <div id="info-kategori-terpilih" class="info-sisa-kategori" style="display: none;">
+                            <strong id="nama-kategori-terpilih">-</strong><br>
+                            <span id="info-kategori-text">Sisa: </span><strong id="sisa-hari-kategori">0</strong><span id="info-kategori-unit"> hari</span>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #555;">Pilih Kategori Cuti:</label>
+                            <div class="kategori-grid" id="kategori-grid"></div>
+                        </div>
+                        <form id="formCuti" class="form-cuti-section">
+                            <div id="info-non-cicil" style="display: none; padding: 15px; background-color: #fff3e0; border-left: 4px solid #ff9800; margin-bottom: 15px; border-radius: 4px;">
+                                <strong style="color: #e65100;">ℹ️ Informasi Penting:</strong><br>
+                                <span id="pesan-non-cicil" style="color: #d84315; display: block; margin-top: 8px;">Cuti jenis ini harus diambil sekaligus dalam satu periode. Anda hanya dapat mengajukannya sekali per tahun kalender.</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label for="tglMulai">Tanggal Mulai</label>
+                                    <input type="date" id="tglMulai" name="tglMulai" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tglSelesai">Tanggal Selesai</label>
+                                    <input type="date" id="tglSelesai" name="tglSelesai" required>
+                                </div>
+                            </div>
+                            <div class="form-group" id="group-jumlah-hari" style="display: none;">
+                                <label for="jumlahHari">Jumlah Hari</label>
+                                <input type="number" id="jumlahHari" value="0" readonly style="background-color: #f5f5f5;">
+                            </div>
+                            <div class="form-group">
+                                <label for="keterangan" aria-placeholder="Keterangan">Keterangan</label>
+                                <textarea id="keterangan" rows="2"></textarea>
+                            </div>
+                            <button type="submit" class="btn">Kirim Pengajuan</button>
+
+                        </form>
+                    </div>
+                </div>
+                <div class="card" id="card-riwayat">
+                    <h2><i class="fas fa-history"></i> Riwayat Pengajuan Cuti</h2>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Kode Cuti</th>
+                                    <th>Tanggal</th>
+                                    <th>Lama</th>
+                                    <th>Sisa Cuti</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="riwayat-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                </div>
+            <div id="view-password" class="view-karyawan">
+                <div class="card">
+                    <h2>Ubah Password Anda</h2>
+                    <form id="form-ubah-password">
+                        <div class="form-group"> <label for="password-lama">Password Lama</label> <input type="password" id="password-lama" required> </div>
+                        <div class="form-group"> <label for="password-baru">Password Baru (min. 6 karakter)</label> <input type="password" id="password-baru" required> </div>
+                        <div class="form-group"> <label for="password-konfirmasi">Konfirmasi Password Baru</label> <input type="password" id="password-konfirmasi" required> </div>
+                        <button type="submit" class="btn">Simpan Password Baru</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sessionToken = sessionStorage.getItem('sessionToken');
+
+        // ===== SESSION MANAGEMENT KARYAWAN =====
+        let sessionTimerIntervalKaryawan = null;
+        const SESSION_DURATION_KARYAWAN = 30 * 60 * 1000; // 30 menit dalam millisecond
+        const WARNING_TIME_KARYAWAN = 5 * 60 * 1000; // Alert 5 menit sebelum expired
+
+        function initSessionTimerKaryawan() {
+            const loginTimestamp = localStorage.getItem('loginTimestamp');
+            if (!loginTimestamp) {
+                console.log('Tidak ada timestamp login, redirect ke login');
+                redirectToLoginKaryawan();
+                return;
+            }
+
+            // Update timer setiap 1 detik
+            if (sessionTimerIntervalKaryawan) clearInterval(sessionTimerIntervalKaryawan);
+            
+            sessionTimerIntervalKaryawan = setInterval(() => {
+                updateSessionTimerKaryawan();
+            }, 1000);
+
+            // Cek session saat halaman dimuat
+            updateSessionTimerKaryawan();
+        }
+
+        function updateSessionTimerKaryawan() {
+            const loginTimestamp = parseInt(localStorage.getItem('loginTimestamp'));
+            const currentTime = new Date().getTime();
+            const elapsedTime = currentTime - loginTimestamp;
+            const remainingTime = SESSION_DURATION_KARYAWAN - elapsedTime;
+
+            if (remainingTime <= 0) {
+                // Session expired
+                clearInterval(sessionTimerIntervalKaryawan);
+                localStorage.removeItem('sessionToken');
+                localStorage.removeItem('loginTimestamp');
+                localStorage.removeItem('userRole');
+                Swal.fire('Session Expired', 'Sesi Anda telah berakhir. Silakan login kembali.', 'warning').then(() => {
+                    redirectToLoginKaryawan();
+                });
+                return;
+            }
+
+            // Convert remaining time ke format menit:detik
+            const minutes = Math.floor(remainingTime / 60000);
+            const seconds = Math.floor((remainingTime % 60000) / 1000);
+            const timeString = `${minutes}m ${seconds}s tersisa`;
+
+            const timerElement = document.getElementById('session-timer-karyawan');
+            if (timerElement) {
+                timerElement.textContent = timeString;
+
+                // Warning: kurang dari 5 menit
+                if (remainingTime < WARNING_TIME_KARYAWAN && remainingTime > 0) {
+                    timerElement.classList.add('warning');
+                } else if (remainingTime <= 0) {
+                    timerElement.classList.add('danger');
+                } else {
+                    timerElement.classList.remove('warning', 'danger');
+                }
+            }
+        }
+
+        function handleLogoutKaryawan() {
+            Swal.fire({
+                title: 'Logout?',
+                text: 'Apakah Anda yakin ingin keluar?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Logout',
+                cancelButtonText: 'Batal'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    // Hapus semua session data
+                    localStorage.removeItem('sessionToken');
+                    localStorage.removeItem('loginTimestamp');
+                    localStorage.removeItem('userRole');
+                    sessionStorage.removeItem('sessionToken');
+                    
+                    clearInterval(sessionTimerIntervalKaryawan);
+                    
+                    Swal.fire('Logout Berhasil', 'Anda telah logout.', 'success').then(() => {
+                        redirectToLoginKaryawan();
+                    });
+                }
+            });
+        }
+
+        function redirectToLoginKaryawan() {
+            clearInterval(sessionTimerIntervalKaryawan);
+            
+            google.script.run.withSuccessHandler(htmlContent => {
+                document.open();
+                document.write(htmlContent);
+                document.close();
+            }).getLoginPage();
+        }
+
+        // Data kategori cuti dengan jatah hari
+        const kategoriCuti = {
+            1: { code: 'A', nama: 'Libur', displayName: 'Libur Potong Cuti Tahunan', hari: 16, cicil: true },
+            2: { code: 'B1', nama: 'Cuti Selama Hamil', hari: 14, cicil: true },
+            3: { code: 'B2', nama: 'Cuti Pasca Bersalin', hari: 90, cicil: false, includeWeekendFull: true },
+            4: { code: 'B3', nama: 'Istri Melahirkan', hari: 3, cicil: false },
+            5: { code: 'B4', nama: 'Operasi/Sakit Parah', hari: 90, cicil: false, includeWeekendFull: true },
+            6: { code: 'B5', nama: 'Izin Sakit', hari: null, cicil: true }, // Tidak ada batasan hari, cicil bisa diambil sebagian
+            7: { code: 'B6', nama: 'Cuti Ibadah Haji', hari: 40, cicil: false, includeWeekendFull: true },
+            8: { code: 'B7', nama: 'Cuti Umroh', hari: 14, cicil: false, includeWeekendFull: true },
+            9: { code: 'B8', nama: 'Pernikahan Karyawan', hari: 5, cicil: false },
+            10: { code: 'B9', nama: 'Keluarga Kandung Meninggal', hari: 3, cicil: false },
+            11: { code: 'B10', nama: 'Pernikahan Anak Kandung', hari: 2, cicil: false },
+            12: { code: 'B11', nama: 'Aqikah Anak Kandung', hari: 2, cicil: false },
+            13: { code: 'B12', nama: 'Sunat Anak Kandung', hari: 2, cicil: false },
+            14: { code: 'B13', nama: 'Pengganti Libur', hari: 0, isPenggantiLibur: true, cicil: true, autoApprove: true }, // Admin set durasi, auto-approve
+            15: { code: 'B14', nama: 'Keluarga Kandung Opname/Rawat inap', hari: null, cicil: true }
+        };
+
+        function getKategoriLabel(kategori) {
+            if (!kategori) {
+                return '';
+            }
+            return kategori.displayName ? kategori.displayName : kategori.nama;
+        }
+
+        function getKategoriLabelByNama(namaKategori) {
+            for (const key in kategoriCuti) {
+                if (Object.prototype.hasOwnProperty.call(kategoriCuti, key)) {
+                    const kategori = kategoriCuti[key];
+                    if (kategori.nama === namaKategori) {
+                        return getKategoriLabel(kategori);
+                    }
+                }
+            }
+            return namaKategori;
+        }
+
+        let kategoriTerpilih = null;
+        let dataKaryawanGlobal = null;
+        let penggantiLiburData = null; // Data pengganti libur untuk user ini
+        let jenisKelaminGlobal = null; // Simpan jenis kelamin user
+        let penggantiLiburSudahDiambil = false; // Blokir kategori jika sudah digunakan
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Inisialisasi session timer
+            initSessionTimerKaryawan();
+
+            if (!sessionToken) {
+                window.location.href = "<?= ScriptApp.getService().getUrl() ?>";
+                return;
+            }
+            
+            // Load data karyawan terlebih dahulu untuk dapat jenis kelamin
+            google.script.run.withSuccessHandler(data => {
+                if(data.error) {
+                    console.error('Error loading data karyawan:', data.error);
+                    return;
+                }
+                dataKaryawanGlobal = data;
+                
+                // ✨ Update kategori "Libur" dengan jatah dari tabel Libur
+                if (data.jatahLibur) {
+                    const jatahLibur = parseInt(data.jatahLibur) || 0;
+                    if (jatahLibur > 0) {
+                        kategoriCuti[1].hari = jatahLibur;
+                        console.log('✓ Jatah Libur (kategori) diset dari sheet:', jatahLibur);
+                    }
+                }
+                
+                // ✨ Tampilkan "Jatah Cuti Setahun" (Sisa dari Jatah Cuti Tahunan) di header
+                if (data.sisaCutiTahunan !== undefined) {
+                    const sisaCutiTahunan = parseInt(data.sisaCutiTahunan) || 0;
+                    document.getElementById('jatah-cuti-tahunan').textContent = sisaCutiTahunan;
+                    console.log('✓ Sisa Jatah Cuti Tahunan ditampilkan di header:', sisaCutiTahunan);
+                } else if (data.jatahCutiTahunan) {
+                    // Fallback jika sisaCutiTahunan belum ada
+                    const jatahCutiTahunan = parseInt(data.jatahCutiTahunan) || 0;
+                    document.getElementById('jatah-cuti-tahunan').textContent = jatahCutiTahunan;
+                    console.log('✓ Jatah Cuti Tahunan (fallback) ditampilkan di header:', jatahCutiTahunan);
+                }
+                
+                jenisKelaminGlobal = data.jenisKelamin; // Simpan jenis kelamin
+                console.log('Data karyawan loaded:', data);
+                console.log('Jenis Kelamin:', jenisKelaminGlobal);
+                
+                // Load data Pengganti Libur setelah dapat data karyawan
+                google.script.run.withSuccessHandler(pengganti => {
+                    console.log('getPenggantiLiburKaryawan response:', pengganti);
+                    
+                    if (pengganti && pengganti.pengganti) {
+                        penggantiLiburData = pengganti.pengganti;
+                        console.log('Pengganti Libur ditemukan:', penggantiLiburData);
+                        // Update kategori dengan durasi dari admin
+                        kategoriCuti[14].hari = penggantiLiburData.durasi;
+                    } else {
+                        console.log('Tidak ada Pengganti Libur yang diset untuk karyawan ini');
+                        penggantiLiburData = null;
+                        kategoriCuti[14].hari = 0;
+                    }
+                    
+                    // Sekarang init kategori buttons setelah dapat pengganti data dan jenis kelamin
+                    initKategoriButtons();
+                
+                    // Muat data karyawan (nama, sisa cuti, riwayat) setelah data dasar siap
+                    muatDataKaryawan();
+                    
+                }).getPenggantiLiburKaryawan(sessionToken);
+            }).getDataKaryawan(sessionToken);
+            
+            // Register event listeners dengan error handling
+            try {
+                const formCuti = document.getElementById('formCuti');
+                if (formCuti) {
+                    formCuti.addEventListener('submit', handlePengajuan);
+                    console.log('✓ Form submit listener registered');
+                } else {
+                    console.warn('⚠ formCuti element not found');
+                }
+                
+                const formPassword = document.getElementById('form-ubah-password');
+                if (formPassword) {
+                    formPassword.addEventListener('submit', handleUbahPassword);
+                    console.log('✓ Password form listener registered');
+                } else {
+                    console.warn('⚠ form-ubah-password element not found');
+                }
+                
+                const tglMulai = document.getElementById('tglMulai');
+                if (tglMulai) {
+                    tglMulai.addEventListener('change', hitungJumlahHari);
+                    console.log('✓ tglMulai listener registered');
+                }
+                
+                const tglSelesai = document.getElementById('tglSelesai');
+                if (tglSelesai) {
+                    tglSelesai.addEventListener('change', hitungJumlahHari);
+                    console.log('✓ tglSelesai listener registered');
+                }
+                
+            } catch (e) {
+                console.error('Error registering event listeners:', e);
+            }
+        });
+
+        function initKategoriButtons() {
+            console.log('initKategoriButtons called, penggantiLiburData:', penggantiLiburData);
+            console.log('Jenis Kelamin User:', jenisKelaminGlobal);
+            
+            const grid = document.getElementById('kategori-grid');
+            grid.innerHTML = '';
+            
+            // Tentukan kategori yang boleh ditampilkan berdasarkan gender
+            const kategoriYangDitampilkan = getKategoriByGender(jenisKelaminGlobal);
+            console.log('Kategori yang ditampilkan:', kategoriYangDitampilkan);
+            
+            for (const [id, data] of Object.entries(kategoriCuti)) {
+                // Skip kategori yang tidak sesuai gender
+                if (!kategoriYangDitampilkan.includes(parseInt(id))) {
+                    console.log(`Kategori ${id} (${getKategoriLabel(data)}) DISEMBUNYIKAN karena tidak sesuai gender ${jenisKelaminGlobal}`);
+                    continue;
+                }
+                
+                // Skip kategori Pengganti Libur jika admin belum mengatur durasi untuk karyawan ini
+                if (data.isPenggantiLibur) {
+                    if (!penggantiLiburData) {
+                        console.log('Pengganti Libur belum diatur admin, skip tampilkan');
+                        continue; // Tidak tampilkan jika admin belum set durasi
+                    }
+                    if (penggantiLiburSudahDiambil) {
+                        console.log('Pengganti Libur sudah diambil/menunggu, sembunyikan kategori');
+                        continue; // Blokir jika sudah pernah diajukan/disetujui
+                    }
+                }
+                
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                // Tandai kategori yang menghitung full termasuk weekend
+                const isFullWeekend = data.includeWeekendFull === true;
+                btn.className = 'kategori-btn' + (isFullWeekend ? ' full-weekend' : '');
+                btn.id = 'btn-kategori-' + id;
+                
+                let hariText = '';
+                if (data.isPenggantiLibur && penggantiLiburData) {
+                    hariText = `${penggantiLiburData.durasi} hari`;
+                } else if (data.hari === null) {
+                    hariText = 'Input Manual';
+                } else {
+                    hariText = `${data.hari} hari`;
+                }
+
+                const displayName = getKategoriLabel(data);
+                
+                btn.innerHTML = `
+                    <strong style="color: #6842F5; font-size: 13px; display: block; margin-bottom: 4px;">${data.code}</strong>
+                    ${displayName}
+                    <span class="jumlah-hari">${hariText}</span>
+                `;
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    pilihKategori(parseInt(id));
+                });
+                grid.appendChild(btn);
+                console.log(`Tombol kategori ${id} (${displayName}) di-render`);
+            }
+        }
+
+        // Fungsi untuk mendapatkan kategori berdasarkan gender
+        function getKategoriByGender(gender) {
+            const genderLower = (gender || '').trim().toLowerCase();
+            
+            // Untuk PEREMPUAN: Tidak boleh ambil "Istri Melahirkan" (ID 4)
+            // Tapi boleh ambil "Izin Selama Hamil" (ID 2) dan "Cuti Pasca Bersalin" (ID 3)
+            if (genderLower === 'perempuan') {
+                return [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]; // Semua kecuali ID 4 (Istri Melahirkan)
+            }
+            
+            // Untuk LAKI-LAKI: Boleh ambil "Istri Melahirkan" (ID 4)
+            // Tapi TIDAK boleh ambil "Izin Selama Hamil" (ID 2) dan "Cuti Pasca Bersalin" (ID 3)
+            if (genderLower === 'laki-laki') {
+                return [1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]; // Semua kecuali ID 2, 3
+            }
+            
+            // Default: tampilkan semua jika gender tidak dikenal
+            return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+        }
+
+        function pilihKategori(id) {
+            console.log('pilihKategori dipanggil dengan id:', id);
+            kategoriTerpilih = id;
+            const kategori = kategoriCuti[id];
+            const displayName = getKategoriLabel(kategori);
+            const isJumlahKategori = kategori && (kategori.code === 'B5' || kategori.code === 'B14');
+            const durasiPengganti = penggantiLiburData && typeof penggantiLiburData.durasi !== 'undefined'
+                ? penggantiLiburData.durasi
+                : 0;
+            
+            // Update button status - gunakan ID yang jelas
+            document.querySelectorAll('.kategori-btn').forEach(btn => btn.classList.remove('active'));
+            const btnAktif = document.getElementById('btn-kategori-' + id);
+            if (btnAktif) {
+                btnAktif.classList.add('active');
+            }
+
+            // Hitung sisa hari untuk kategori ini
+            let sisaHari = hitungSisaCutiKategori(id);
+            console.log('Sisa hari kategori:', sisaHari);
+            
+            // Update judul dan tampilan sisa cuti di card sebelah kiri
+            if (kategori.isPenggantiLibur) {
+                // Untuk Pengganti Libur
+                const durasiAktualPengganti = penggantiLiburData && typeof penggantiLiburData.durasi !== 'undefined'
+                    ? penggantiLiburData.durasi
+                    : sisaHari;
+                const labelDurasi = durasiPengganti ? ` - ${durasiPengganti} hari` : '';
+                document.getElementById('judul-sisa-cuti').textContent = `${displayName}${labelDurasi}`;
+                document.getElementById('sisa-cuti').textContent = durasiAktualPengganti;
+                sisaHari = durasiAktualPengganti;
+            } else {
+                const judulPrefix = isJumlahKategori ? 'Jumlah' : 'Sisa';
+                document.getElementById('judul-sisa-cuti').textContent = `${judulPrefix} ${displayName}`;
+                document.getElementById('sisa-cuti').textContent = sisaHari;
+            }
+
+            // Tampilkan info kategori terpilih di form
+            const infoKategori = document.getElementById('info-kategori-terpilih');
+            if (infoKategori) {
+                infoKategori.style.display = 'block';
+                document.getElementById('nama-kategori-terpilih').textContent = displayName;
+                
+                // Update teks info sesuai kategori
+                if (kategori.isPenggantiLibur) {
+                    document.getElementById('info-kategori-text').textContent = 'Durasi: ';
+                    document.getElementById('info-kategori-unit').textContent = ' hari';
+                    sisaHari = penggantiLiburData ? penggantiLiburData.durasi : sisaHari; // Durasi fixed dari admin
+                } else if (!kategori.cicil) {
+                    // Kategori non-cicil
+                    document.getElementById('info-kategori-text').textContent = 'Jatah (tidak bisa cicil): ';
+                    document.getElementById('info-kategori-unit').textContent = ' hari';
+                } else {
+                    const infoLabel = isJumlahKategori ? 'Jumlah' : 'Sisa';
+                    document.getElementById('info-kategori-text').textContent = `${infoLabel}: `;
+                    document.getElementById('info-kategori-unit').textContent = ' hari';
+                }
+                document.getElementById('sisa-hari-kategori').textContent = sisaHari;
+            }
+
+            // PENTING: Tampilkan/sembunyikan input tanggal berdasarkan kategori cicil
+            const dateInputs = document.querySelector('div[style*="grid-template-columns: 1fr 1fr"]');
+            const groupJumlahHari = document.getElementById('group-jumlah-hari');
+            const infoNonCicil = document.getElementById('info-non-cicil');
+            
+            // UNTUK NON-CICIL: TAMPILKAN input tanggal + info warning
+            if (!kategori.cicil && kategori.hari !== null) {
+                // Kategori NON-CICIL = TAMPILKAN input tanggal + warning message
+                if (dateInputs) dateInputs.style.display = 'grid';
+                if (groupJumlahHari) groupJumlahHari.style.display = 'block';
+                if (infoNonCicil) {
+                    infoNonCicil.style.display = 'block';
+                    document.getElementById('pesan-non-cicil').textContent = `⚠️ ${displayName} harus diambil TEPAT ${kategori.hari} hari sekaligus (tidak boleh kurang atau lebih). Pilih tanggal mulai dan tanggal selesai dengan selisih ${kategori.hari} hari.`;
+                }
+            } else if (kategori.cicil || kategori.isPenggantiLibur) {
+                // Kategori CICIL atau Pengganti Libur = tampilkan input tanggal
+                if (dateInputs) dateInputs.style.display = 'grid';
+                if (groupJumlahHari) groupJumlahHari.style.display = 'block';
+                if (infoNonCicil) infoNonCicil.style.display = 'none';
+            }
+
+            // Tampilkan form cuti
+            const formCuti = document.getElementById('formCuti');
+            if (formCuti) {
+                formCuti.classList.add('active');
+                console.log('Form Cuti di-show');
+                // Reset form
+                formCuti.reset();
+                document.getElementById('jumlahHari').value = '0';
+                
+                // Jika non-cicil, jangan focus ke tanggal
+                if (kategori.cicil || kategori.isLiburKerja) {
+                    document.getElementById('tglMulai').focus();
+                }
+            } else {
+                console.error('Form Cuti tidak ditemukan!');
+            }
+        }
+
+        function hitungSisaCutiKategori(kategoriId) {
+            if (!dataKaryawanGlobal) return 0;
+            
+            const totalJatah = kategoriCuti[kategoriId].hari;
+            const riwayat = dataKaryawanGlobal.riwayat || [];
+            const kategoriNama = kategoriCuti[kategoriId].nama;
+            
+            let totalTerpakai = 0;
+            riwayat.forEach(item => {
+                if (item.jenis === kategoriNama && item.status === 'Disetujui') {
+                    totalTerpakai += item.lama;
+                }
+            });
+            
+            // Untuk kategori tanpa batas (hari: null), tampilkan total yang sudah diambil
+            if (totalJatah === null) {
+                return totalTerpakai;
+            }
+            
+            return Math.max(0, totalJatah - totalTerpakai);
+        }
+
+        // Hitung hari kerja di sisi client (skip Sabtu/Minggu, tanpa libur nasional)
+        function hitungHariKerjaClient(tglMulai, tglSelesai) {
+            let count = 0;
+            for (let d = new Date(tglMulai); d <= tglSelesai; d.setDate(d.getDate() + 1)) {
+                const day = d.getDay();
+                if (day !== 0 && day !== 6) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        function hitungJumlahHari() {
+            const tglMulai = document.getElementById('tglMulai').value;
+            const tglSelesai = document.getElementById('tglSelesai').value;
+
+            if (tglMulai && tglSelesai) {
+                const mulai = new Date(tglMulai);
+                const selesai = new Date(tglSelesai);
+
+                // Hitung hari: default skip Sabtu/Minggu; kecuali kategori includeWeekendFull gunakan kalender penuh
+                const jumlah = kategoriTerpilih && kategoriCuti[kategoriTerpilih]?.includeWeekendFull
+                    ? Math.floor((selesai - mulai) / (1000 * 60 * 60 * 24)) + 1
+                    : hitungHariKerjaClient(mulai, selesai);
+
+                document.getElementById('jumlahHari').value = jumlah > 0 ? jumlah : 0;
+                document.getElementById('group-jumlah-hari').style.display = 'block';
+
+                // VALIDASI untuk setiap tipe kategori
+                if (kategoriTerpilih) {
+                    const kategori = kategoriCuti[kategoriTerpilih];
+                    const displayName = getKategoriLabel(kategori);
+                    const inputHari = document.getElementById('jumlahHari');
+                    
+                    if (!kategori.cicil && kategori.hari !== null) {
+                        // VALIDASI NON-CICIL: HARUS TEPAT sesuai jatah
+                        console.log(`Non-cicil validation: Anda pilih ${jumlah} hari, harus ${kategori.hari} hari (mode ${kategori.includeWeekendFull ? 'kalender' : 'kerja'})`);
+                        
+                        if (jumlah !== kategori.hari) {
+                            inputHari.style.color = '#f44336';
+                            inputHari.style.fontWeight = 'bold';
+                            inputHari.title = `❌ SALAH! ${displayName} harus ${kategori.hari} hari tepat. Anda memilih ${jumlah} hari.`;
+                        } else {
+                            inputHari.style.color = '#4caf50';
+                            inputHari.style.fontWeight = 'bold';
+                            inputHari.title = `✓ BENAR! Tepat ${kategori.hari} hari`;
+                        }
+                    } else if (kategori.isPenggantiLibur) {
+                        // VALIDASI PENGGANTI LIBUR: HARUS TEPAT sesuai durasi admin
+                        const expectedDurasi = penggantiLiburData ? penggantiLiburData.durasi : 0;
+                        
+                        if (jumlah !== expectedDurasi) {
+                            inputHari.style.color = '#f44336';
+                            inputHari.style.fontWeight = 'bold';
+                            inputHari.title = `❌ SALAH! ${displayName} harus ${expectedDurasi} hari tepat. Anda memilih ${jumlah} hari.`;
+                        } else {
+                            inputHari.style.color = '#4caf50';
+                            inputHari.style.fontWeight = 'bold';
+                            inputHari.title = `✓ BENAR! Tepat ${expectedDurasi} hari`;
+                        }
+                    } else if (kategori.hari !== null && kategori.cicil) {
+                        // VALIDASI CICIL: tidak boleh lebih dari sisa
+                        const sisaHari = parseInt(document.getElementById('sisa-hari-kategori').textContent) || 0;
+                        
+                        if (jumlah > sisaHari) {
+                            inputHari.style.color = '#f44336';
+                            inputHari.title = `❌ MELEBIHI! Sisa cuti Anda ${sisaHari} hari, Anda memilih ${jumlah} hari`;
+                        } else if (jumlah > 0) {
+                            inputHari.style.color = '#4caf50';
+                            inputHari.title = `✓ OK! Sisa cuti ${sisaHari} hari`;
+                        } else {
+                            inputHari.style.color = '';
+                            inputHari.title = '';
+                        }
+                    } else {
+                        // IZIN SAKIT atau kategori lainnya
+                        inputHari.style.color = '';
+                        inputHari.title = '';
+                    }
+                }
+            }
+        }
+
+        // FUNGSI UTILITY: Tampilkan alert sukses pengajuan cuti
+        function tampilkanAlertSuksesCSuti() {
+            const kategori = kategoriCuti[kategoriTerpilih];
+            const tglMulai = document.getElementById('tglMulai').value;
+            const tglSelesai = document.getElementById('tglSelesai').value;
+            const jumlahHari = document.getElementById('jumlahHari').value;
+            const keterangan = document.getElementById('keterangan').value;
+            const displayName = getKategoriLabel(kategori);
+            
+            const mulai = new Date(tglMulai);
+            const selesai = new Date(tglSelesai);
+            const tglMulaiFormat = mulai.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            const tglSelesaiFormat = selesai.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            
+            // Tambah info khusus untuk kategori yang butuh persetujuan admin
+            const needsApproval = !kategori.autoApprove; // Tidak auto-approve = butuh persetujuan admin
+            
+            let infoTambahanHTML = '';
+            if (needsApproval) {
+                infoTambahanHTML = `
+                    <div style="background-color: #fff3e0; border-left: 4px solid #ff9800; padding: 12px; margin: 15px 0; border-radius: 4px;">
+                        <strong style="color: #e65100;">ℹ️ Catatan Penting:</strong><br>
+                        <span style="color: #d84315; font-size: 14px;">
+                            Pengajuan Anda telah masuk ke dalam sistem dan sedang menunggu persetujuan dari Admin. 
+                            Status akan diperbarui via email ketika Admin telah melakukan review.
+                        </span>
+                    </div>
+                `;
+            }
+            
+            const detailPengajuan = `
+                <div style="text-align: left; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
+                    <h3 style="margin-top: 0; color: #4caf50;">✓ Pengajuan Berhasil Dikirim!</h3>
+                    <hr style="border: none; border-top: 2px solid #4caf50;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="border-bottom: 1px solid #e0e0e0;">
+                            <td style="padding: 8px; font-weight: bold; width: 150px;">Kategori Cuti:</td>
+                            <td style="padding: 8px;">${displayName}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e0e0e0;">
+                            <td style="padding: 8px; font-weight: bold;">Tanggal Mulai:</td>
+                            <td style="padding: 8px;">${tglMulaiFormat}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e0e0e0;">
+                            <td style="padding: 8px; font-weight: bold;">Tanggal Selesai:</td>
+                            <td style="padding: 8px;">${tglSelesaiFormat}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e0e0e0;">
+                            <td style="padding: 8px; font-weight: bold;">Jumlah Hari:</td>
+                            <td style="padding: 8px; color: #2196f3; font-weight: bold;">${jumlahHari} hari</td>
+                        </tr>
+                        ${keterangan ? `<tr style="border-bottom: 1px solid #e0e0e0;">
+                            <td style="padding: 8px; font-weight: bold;">Keterangan:</td>
+                            <td style="padding: 8px;">${keterangan}</td>
+                        </tr>` : ''}
+                        <tr>
+                            <td style="padding: 8px; font-weight: bold;">Status:</td>
+                            <td style="padding: 8px;">
+                                <span style="background-color: #fff0e1; color: #ff9800; padding: 6px 12px; border-radius: 12px; font-weight: bold;">
+                                    ⏳ Menunggu Persetujuan Admin
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                    <hr style="border: none; border-top: 2px solid #4caf50; margin-top: 15px;">
+                    ${infoTambahanHTML}
+                    <p style="margin: 10px 0; color: #666; font-size: 14px;">
+                        ✓ Pengajuan Anda telah masuk ke dalam sistem.<br>
+                        ✓ Lihat riwayat pengajuan Anda di tab <strong>Riwayat</strong>.<br>
+                        ✓ Admin akan melakukan review dan memberikan persetujuan dalam waktu singkat.
+                    </p>
+                </div>
+            `;
+            
+            Swal.fire({
+                title: 'Pengajuan Cuti Berhasil!',
+                html: detailPengajuan,
+                icon: 'success',
+                confirmButtonText: 'Lihat Riwayat',
+                confirmButtonColor: '#4caf50'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const riwayatCard = document.getElementById('card-riwayat');
+                    if (riwayatCard) {
+                        riwayatCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        riwayatCard.classList.add('highlight-pulse');
+                        setTimeout(() => riwayatCard.classList.remove('highlight-pulse'), 2400);
+                    }
+                }
+                
+                // Reset form dan reload data
+                document.getElementById('formCuti').reset();
+                document.getElementById('formCuti').classList.remove('active');
+                document.getElementById('info-kategori-terpilih').style.display = 'none';
+                document.querySelectorAll('.kategori-btn').forEach(btn => btn.classList.remove('active'));
+                kategoriTerpilih = null;
+                muatDataKaryawan();
+                initKategoriButtons();
+            });
+        }
+
+        function showKaryawanView(viewName) {
+            document.querySelectorAll('.view-karyawan').forEach(view => view.classList.remove('active'));
+            document.getElementById('view-' + viewName).classList.add('active');
+            document.querySelectorAll('.sidebar-karyawan a').forEach(menu => menu.classList.remove('active'));
+            document.getElementById('menu-' + viewName).classList.add('active');
+        }
+
+        function handleUbahPassword(e) {
+            e.preventDefault();
+            const passwordLama = document.getElementById('password-lama').value;
+            const passwordBaru = document.getElementById('password-baru').value;
+            const passwordKonfirmasi = document.getElementById('password-konfirmasi').value;
+
+            if (passwordBaru !== passwordKonfirmasi) {
+                Swal.fire('Gagal', 'Konfirmasi password baru tidak cocok.', 'error');
+                return;
+            }
+
+            const data = { passwordLama, passwordBaru };
+            Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            google.script.run.withSuccessHandler(response => {
+                if (response.startsWith('Error')) {
+                    Swal.fire('Gagal!', response, 'error');
+                } else {
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: response,
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                    document.getElementById('form-ubah-password').reset();
+                }
+            }).ubahPasswordKaryawan(data, sessionToken);
+        }
+
+        function muatDataKaryawan() {
+            google.script.run.withSuccessHandler(data => {
+                if(data.error) {
+                    Swal.fire('Error', data.error, 'error');
+                    return;
+                }
+                dataKaryawanGlobal = data;
+                
+                // ✨ Update kategori "Libur" dengan jatah dari tabel Libur
+                if (data.jatahLibur) {
+                    const jatahLibur = parseInt(data.jatahLibur) || 0;
+                    if (jatahLibur > 0) {
+                        kategoriCuti[1].hari = jatahLibur;
+                        console.log('✓ Jatah Libur refreshed:', jatahLibur);
+                    }
+                }
+                
+                // ✨ Tampilkan "Jatah Cuti Setahun" (Sisa dari Jatah Cuti Tahunan) di header
+                if (data.sisaCutiTahunan !== undefined) {
+                    const sisaCutiTahunan = parseInt(data.sisaCutiTahunan) || 0;
+                    document.getElementById('jatah-cuti-tahunan').textContent = sisaCutiTahunan;
+                    console.log('✓ Sisa Jatah Cuti Tahunan diupdate di header:', sisaCutiTahunan);
+                } else if (data.jatahCutiTahunan) {
+                    // Fallback jika sisaCutiTahunan belum ada
+                    const jatahCutiTahunan = parseInt(data.jatahCutiTahunan) || 0;
+                    document.getElementById('jatah-cuti-tahunan').textContent = jatahCutiTahunan;
+                    console.log('✓ Jatah Cuti Tahunan (fallback) diupdate di header:', jatahCutiTahunan);
+                }
+                
+                // Cek apakah Pengganti Libur sudah pernah diambil (menunggu atau disetujui)
+                penggantiLiburSudahDiambil = (data.riwayat || []).some(item => item.jenis === 'Pengganti Libur' && item.status !== 'Ditolak');
+                if (penggantiLiburSudahDiambil) {
+                    console.log('Pengganti Libur sudah pernah diambil atau sedang proses, sembunyikan kategori.');
+                }
+                console.log('Data karyawan loaded:', data);
+                document.getElementById('nama-pengguna').textContent = `Selamat Datang, ${data.nama}`;
+                
+                // Jangan fetch libur kerja lagi di sini (sudah di DOMContentLoaded)
+                
+                // Update sisa cuti total (Cuti Tahunan) - tampil saat pertama kali
+                document.getElementById('judul-sisa-cuti').textContent = 'Sisa Cuti Tahunan';
+                const sisaCutiTahunan = hitungSisaCutiKategori(1);
+                document.getElementById('sisa-cuti').textContent = sisaCutiTahunan;
+
+                const tbody = document.getElementById('riwayat-body');
+                tbody.innerHTML = '';
+                if (data.riwayat.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada riwayat pengajuan.</td></tr>';
+                    return;
+                }
+                data.riwayat.forEach(item => {
+                    let row = tbody.insertRow();
+                    
+                    // Cari kategori ID dari nama kategori
+                    let kategoriId = null;
+                    let kodeRiwayat = item.kode || item.jenis;
+                    for (const [id, kategori] of Object.entries(kategoriCuti)) {
+                        if (kategori.nama === item.jenis) {
+                            kategoriId = parseInt(id);
+                            kodeRiwayat = kategori.code;
+                            break;
+                        }
+                    }
+                    
+                    // Hitung sisa cuti untuk kategori ini
+                    const sisaCutiKat = kategoriId ? hitungSisaCutiKategori(kategoriId) : '-';
+                    
+                    row.innerHTML = `
+                        <td>${kodeRiwayat}</td>
+                        <td>${item.tanggal}</td>
+                        <td>${item.lama} hari</td>
+                        <td><strong style="color: #6842F5;">${sisaCutiKat} ${sisaCutiKat !== '-' ? 'hari' : ''}</strong></td>
+                        <td><span class="status status-${item.status.replace(/ /g, '-')}">${item.status}</span></td>
+                    `;
+                });
+            }).getDataKaryawan(sessionToken);
+        }
+
+        function handlePengajuan(e) {
+            e.preventDefault();
+            console.log('=== HANDLE PENGAJUAN START ===');
+
+            try {
+                if (!kategoriTerpilih) {
+                    Swal.fire('Gagal!', 'Silakan pilih kategori cuti terlebih dahulu.', 'error');
+                    return;
+                }
+
+                const kategori = kategoriCuti[kategoriTerpilih];
+                const displayName = getKategoriLabel(kategori);
+                console.log('Kategori:', kategori);
+                
+                // VALIDASI PERTAMA: Keterangan WAJIB diisi
+                const keteranganEl = document.getElementById('keterangan');
+                if (!keteranganEl) {
+                    console.error('keterangan element not found!');
+                    Swal.fire('Gagal!', 'Elemen form tidak ditemukan', 'error');
+                    return;
+                }
+                
+                const keterangan = keteranganEl.value.trim();
+                if (!keterangan) {
+                    Swal.fire('Gagal!', 'Keterangan WAJIB diisi sebelum mengirim pengajuan.', 'error');
+                    keteranganEl.focus();
+                    return;
+                }
+                console.log('✓ Keterangan OK');
+                
+                // STEP 1: Setup nilai tanggal dan jumlah hari berdasarkan tipe kategori
+                let jumlahHari = 0;
+                let tglMulai = '';
+                let tglSelesai = '';
+                
+                // Ambil tanggal
+                tglMulai = document.getElementById('tglMulai').value;
+                tglSelesai = document.getElementById('tglSelesai').value;
+
+                if (!tglMulai || !tglSelesai) {
+                    Swal.fire('Gagal!', 'Silakan isi tanggal mulai dan tanggal selesai.', 'error');
+                    return;
+                }
+
+                // Hitung jumlah hari sesuai aturan (default skip Sabtu/Minggu, kecuali includeWeekendFull)
+                const mulaiDate = new Date(tglMulai);
+                const selesaiDate = new Date(tglSelesai);
+                const jumlahHariHitung = kategori.includeWeekendFull
+                    ? Math.floor((selesaiDate - mulaiDate) / (1000 * 60 * 60 * 24)) + 1
+                    : hitungHariKerjaClient(mulaiDate, selesaiDate);
+
+                jumlahHari = jumlahHariHitung;
+                document.getElementById('jumlahHari').value = jumlahHari;
+                console.log('From form (computed jumlahHari):', { tglMulai, tglSelesai, jumlahHari });
+
+                if (jumlahHari <= 0) {
+                    Swal.fire('Gagal!', 'Jumlah hari tidak valid.', 'error');
+                    return;
+                }
+
+                // STEP 2: Validasi berdasarkan tipe kategori
+                console.log('=== VALIDATION STEP ===');
+                const sisaHari = parseInt(document.getElementById('sisa-hari-kategori').textContent) || 0;
+
+                if (kategori.isPenggantiLibur) {
+                    console.log('Validating Pengganti Libur');
+                    const hariDiambil = jumlahHari;
+                    const expected = penggantiLiburData ? penggantiLiburData.durasi : 0;
+                    if (hariDiambil !== expected) {
+                        Swal.fire('Gagal!', `${displayName} harus diambil TEPAT ${expected} hari (hari kerja, skip Sabtu/Minggu). Anda memilih ${hariDiambil} hari.`, 'error');
+                        return;
+                    }
+                    jumlahHari = hariDiambil;
+                    console.log('✓ Pengganti Libur OK');
+                } else if (!kategori.cicil && kategori.hari !== null) {
+                    console.log('Validating NON-CICIL - STRICT VALIDATION');
+                    const hariDiambil = jumlahHari;
+                    console.log('Check:', { tglMulai, tglSelesai, hariDiambil, expected: kategori.hari, mode: kategori.includeWeekendFull ? 'kalender' : 'kerja' });
+                    if (hariDiambil !== kategori.hari) {
+                        Swal.fire(
+                            'Gagal!', 
+                            `❌ ${displayName} HARUS diambil TEPAT ${kategori.hari} hari sekaligus (mode ${kategori.includeWeekendFull ? 'kalender penuh' : 'hari kerja, skip Sabtu/Minggu'}).\n\nAnda memilih: ${hariDiambil} hari\n\nSelisih tanggal tidak sesuai. Silakan pilih ulang tanggal yang tepat.`, 
+                            'error'
+                        );
+                        return;
+                    }
+                    jumlahHari = hariDiambil;
+                    console.log('✓ Non-cicil OK - Tepat', kategori.hari, 'hari');
+                } else if (kategori.hari !== null && kategori.cicil) {
+                    console.log('Validating CICIL with limit');
+                    if (jumlahHari > sisaHari) {
+                        Swal.fire('Gagal!', `Jumlah hari yang Anda ajukan (${jumlahHari} hari) melebihi sisa cuti Anda (${sisaHari} hari).`, 'error');
+                        return;
+                    }
+                    console.log('✓ Cicil OK');
+                }
+
+                console.log('=== ALL VALIDATIONS PASSED ===');
+
+                const dataForm = {
+                    kategoriId: kategoriTerpilih,
+                    kategoriNama: kategori.nama,
+                    tglMulai: tglMulai,
+                    tglSelesai: tglSelesai,
+                    jumlahHari: jumlahHari,
+                    keterangan: keteranganEl.value,
+                    isPenggantiLibur: kategori.isPenggantiLibur || false,
+                    penggantiLiburDurasi: kategori.isPenggantiLibur && penggantiLiburData ? penggantiLiburData.durasi : null,
+                    autoApprove: kategori.autoApprove || false
+                };
+                
+                console.log('Final dataForm:', dataForm);
+
+                // Kirim (tanpa upload file)
+                console.log('Sending WITHOUT FILE');
+                Swal.fire({ title: 'Mengirim...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                
+                // Gunakan timeout manual dengan Promise
+                const timeoutPromise = new Promise((resolve, reject) => {
+                    console.log('📤 Creating timeoutPromise, waiting for server...');
+                    const timer = setTimeout(() => {
+                        clearTimeout(timer);
+                        console.error('⏱ TIMEOUT after 30 seconds');
+                        reject(new Error('Timeout: Server tidak merespons dalam 30 detik'));
+                    }, 30000);
+                    
+                    console.log('📡 Calling google.script.run.simpanPengajuanCutiKategori...');
+                    google.script.run
+                        .withSuccessHandler(response => {
+                            clearTimeout(timer);
+                            console.log('✅ SUCCESS Response:', response);
+                            if (response.startsWith('Error')) {
+                                reject(new Error(response));
+                            } else {
+                                resolve(response);
+                            }
+                        })
+                        .withFailureHandler(err => {
+                            clearTimeout(timer);
+                            console.error('❌ FAILURE Error:', err);
+                            reject(err);
+                        })
+                        .simpanPengajuanCutiKategori(dataForm, sessionToken);
+                });
+                
+                timeoutPromise
+                    .then(response => {
+                        console.log('✅ Promise resolved:', response);
+                        tampilkanAlertSuksesCSuti();
+                    })
+                    .catch(err => {
+                        console.error('❌ Promise rejected:', err.message || err);
+                        Swal.fire('Gagal!', err.message || 'Terjadi kesalahan server', 'error');
+                    });
+            } catch (e) {
+                console.error('❌ EXCEPTION in handlePengajuan:', e);
+                Swal.fire('Gagal!', 'Terjadi kesalahan: ' + e.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>     

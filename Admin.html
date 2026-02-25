@@ -1,0 +1,2165 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+      margin: 0;
+      background-color: #f4f6f9;
+      display: flex;
+    }
+
+    .main-content {
+      margin-left: 240px;
+      flex-grow: 1;
+      padding: 30px;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      z-index: 100;
+      flex-shrink: 0;
+      width: 240px;
+      background-color: #ffffff;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-content {
+      flex-grow: 1;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      text-align: center;
+    }
+
+    .sidebar-header h2 {
+      color: #6842F5;
+      margin: 0;
+    }
+
+    .sidebar-menu {
+      list-style-type: none;
+      padding: 0;
+      margin: 20px 0;
+    }
+
+    .sidebar-menu li a {
+      display: flex;
+      align-items: center;
+      padding: 15px 20px;
+      text-decoration: none;
+      color: #555;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .sidebar-menu li a .fa-fw {
+      width: 20px;
+      margin-right: 15px;
+    }
+
+    .sidebar-menu li a:hover {
+      background-color: #F3F0FF;
+      color: #6842F5;
+    }
+
+    .sidebar-menu li a.active {
+      background-color: #6842F5;
+      color: white;
+      border-radius: 5px;
+      margin: 0 10px;
+    }
+
+    .sidebar-footer {
+      flex-shrink: 0;
+      padding: 20px;
+      text-align: center;
+      color: #888;
+      font-size: 12px;
+      border-top: 1px solid #eee;
+    }
+
+    .sidebar-footer .title {
+      font-weight: bold;
+      color: #555;
+      font-size: 13px;
+    }
+
+    .sidebar-footer .subtitle {
+      margin-top: 5px;
+    }
+
+    /* View Management */
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    /* Dashboard Layout & Cards */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .stat-card {
+      grid-column: span 1;
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+    }
+
+    .stat-card-icon {
+      width: 50px;
+      height: 50px;
+      flex-shrink: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 22px;
+      border-radius: 50%;
+      margin-right: 15px;
+    }
+
+    .stat-card-icon.purple {
+      background-color: #F3F0FF;
+      color: #6842F5;
+    }
+
+    .stat-card-icon.orange {
+      background-color: #fff0e1;
+      color: #ff9800;
+    }
+
+    .stat-card-icon.blue {
+      background-color: #e3f2fd;
+      color: #2196f3;
+    }
+
+    .stat-card-info h4 {
+      margin: 0;
+      font-size: 14px;
+      color: #888;
+      text-transform: uppercase;
+    }
+
+    .stat-card-info p {
+      margin: 5px 0 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .chart-container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      position: relative;
+      height: 280px;
+      box-sizing: border-box;
+    }
+
+    .analysis-card,
+    .upcoming-card {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .chart-container h3,
+    .analysis-card h3,
+    .upcoming-card h3 {
+      margin-top: 0;
+      color: #333;
+      font-size: 18px;
+    }
+
+    .chart-container.distribusi {
+      grid-column: 1 / 2;
+    }
+
+    .chart-container.kategori-chart {
+      grid-column: 2 / 4;
+    }
+
+    .chart-container.karyawan-cuti {
+      grid-column: 1 / 4;
+    }
+
+    .analysis-card {
+      grid-column: 1 / 4;
+    }
+
+    .analysis-card .highlight {
+      font-size: 18px;
+      font-weight: bold;
+      color: #6842F5;
+    }
+
+    .upcoming-card {
+      grid-column: 1 / 4;
+    }
+
+    .upcoming-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .upcoming-list li {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .upcoming-list li:last-child {
+      border-bottom: none;
+    }
+
+    .upcoming-list .details {
+      font-size: 12px;
+      color: #888;
+      grid-column: 1 / 3;
+    }
+
+    /* Table Styles */
+    .table-container {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+    }
+
+    .table-scroll-wrapper {
+      max-height: 65vh;
+      overflow-y: auto;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    #tabel-rekapan-detail {
+      border-collapse: collapse;
+    }
+
+    #tabel-rekapan-detail thead tr {
+      background-color: #f5f5f5;
+      border-bottom: 2px solid #ddd;
+    }
+
+    #tabel-rekapan-detail th {
+      padding: 12px 8px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 11px;
+      color: #333;
+      white-space: nowrap;
+      border: 1px solid #e0e0e0;
+    }
+
+    #tabel-rekapan-detail td {
+      padding: 10px 8px;
+      text-align: center;
+      border: 1px solid #f0f0f0;
+      font-size: 11px;
+    }
+
+    #tabel-rekapan-detail tbody tr:hover {
+      background-color: #f9f9f9;
+    }
+
+    #tabel-rekapan-detail tbody tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+
+    #tabel-rekapan-detail td:nth-child(2) {
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .table-scroll-wrapper th {
+      position: sticky;
+      top: 0;
+      background-color: #ffffff;
+      color: #888;
+      font-size: 12px;
+      text-transform: uppercase;
+      z-index: 10;
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    td {
+      color: #333;
+      font-size: 14px;
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .action-buttons button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 0 5px;
+      color: #888;
+      transition: color 0.3s;
+    }
+
+    .action-buttons button:hover {
+      color: #6842F5;
+    }
+
+    /* Status Indicators */
+    .status {
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .status-menunggu-persetujuan {
+      background-color: #fff0e1;
+      color: #ff9800;
+    }
+
+    .status-disetujui {
+      background-color: #e8f5e9;
+      color: #4caf50;
+    }
+
+    .status-ditolak {
+      background-color: #ffebee;
+      color: #f44336;
+    }
+
+    /* Filter and Form Elements */
+    .filter-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    .filter-container input,
+    .filter-container select,
+    .filter-container button {
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / 3;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    /* Session Info & Logout */
+    .session-header {
+      position: fixed;
+      top: 0;
+      right: 0;
+      padding: 15px 30px;
+      background-color: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      z-index: 99;
+    }
+
+    .session-info {
+      font-size: 13px;
+      color: #666;
+      text-align: right;
+    }
+
+    .session-info .session-time {
+      font-weight: bold;
+      color: #6842F5;
+      font-size: 12px;
+    }
+
+    .session-info .session-time.warning {
+      color: #ff9800;
+    }
+
+    .session-info .session-time.danger {
+      color: #f44336;
+    }
+
+    .btn-logout {
+      padding: 8px 16px;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background-color 0.3s;
+    }
+
+    .btn-logout:hover {
+      background-color: #d32f2f;
+    }
+
+    .main-content {
+      margin-top: 70px;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: white;
+      transition: background-color 0.2s;
+    }
+
+    .btn-primary {
+      background-color: #6842F5;
+    }
+
+    .btn-primary:hover {
+      background-color: #5A39E0;
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+    }
+
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 10% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 500px;
+    }
+
+    .close-button {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close-button:hover,
+    .close-button:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 10px;
+    }
+
+    .detail-grid dt {
+      font-weight: bold;
+      color: #555;
+    }
+
+    .detail-grid dd {
+      margin: 0;
+    }
+
+    /* Print Styles */
+    .print-title {
+      display: none;
+    }
+
+    @media print {
+
+      .sidebar,
+      .main-content>.view>h1,
+      .filter-container,
+      .action-buttons,
+      .aksi-header,
+      .aksi-cell {
+        display: none !important;
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 0;
+      }
+
+      .print-title {
+        display: block;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 24px;
+        font-weight: bold;
+      }
+
+      .table-container {
+        box-shadow: none;
+        border: 1px solid #ddd;
+      }
+
+      .table-scroll-wrapper {
+        max-height: none;
+        overflow: visible;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Session Header -->
+  <div class="session-header">
+    <div class="session-info">
+      <div>Sesi Aktif</div>
+      <div class="session-time" id="session-timer">Memuat...</div>
+    </div>
+    <button class="btn-logout" onclick="handleLogout()">Logout</button>
+  </div>
+
+  <nav class="sidebar">
+    <div class="sidebar-content">
+      <div class="sidebar-header">
+        <h2>Dashboard Admin</h2>
+      </div>
+      <ul class="sidebar-menu">
+        <li><a href="#" id="menu-dashboard" class="active" onclick="event.preventDefault(); showView('dashboard')"><i
+              class="fas fa-tachometer-alt fa-fw"></i>
+            Dashboard</a></li>
+        <li><a href="#" id="menu-pengajuan" onclick="event.preventDefault(); showView('pengajuan')"><i
+              class="fas fa-file-alt fa-fw"></i> Pengajuan
+            Cuti</a></li>
+        <li><a href="#" id="menu-karyawan" onclick="event.preventDefault(); showView('karyawan')"><i
+              class="fas fa-users-cog fa-fw"></i> Karyawan</a>
+        </li>
+        <li><a href="#" id="menu-libur" onclick="event.preventDefault(); showView('libur')"><i
+              class="fas fa-calendar-alt fa-fw"></i> Pengganti
+            Libur</a></li>
+        <li><a href="#" id="menu-rekapan" onclick="event.preventDefault(); showView('rekapan')"><i
+              class="fas fa-file-csv fa-fw"></i> Rekapan Cuti</a>
+        </li>
+      </ul>
+    </div>
+    <div class="sidebar-footer">
+      <div class="title">Izin & Cuti Karyawan</div>
+      <div class="subtitle">Bina Alam Laboratorium</div>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div id="view-dashboard" class="view active">
+      <h1>Ringkasan</h1>
+      <div class="dashboard-layout">
+        <div class="stat-card">
+          <div class="stat-card-icon purple"><i class="fas fa-users"></i></div>
+          <div class="stat-card-info">
+            <h4>Total Karyawan</h4>
+            <p id="stat-karyawan">0</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon orange"><i class="fas fa-inbox"></i></div>
+          <div class="stat-card-info">
+            <h4>Pengajuan Baru</h4>
+            <p id="stat-pengajuan">0</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon blue"><i class="fas fa-calendar-check"></i></div>
+          <div class="stat-card-info">
+            <h4>Sedang Cuti</h4>
+            <p id="jumlah-pengajuan-cuti">0</p>
+          </div>
+        </div>
+        <div class="chart-container distribusi">
+          <h3>Distribusi Jenis Cuti</h3> <canvas id="distribusiChart"></canvas>
+        </div>
+        <div class="chart-container kategori-chart">
+          <h3>Persentase Karyawan per Kategori Cuti</h3> <canvas id="kategoriChart"></canvas>
+        </div>
+        <div class="chart-container karyawan-cuti">
+          <h3>Jumlah Karyawan yang Sedang Cuti per Kategori</h3> <canvas id="karyawanCutiChart"></canvas>
+        </div>
+        <div class="analysis-card">
+          <h3><i class="fas fa-chart-line"></i> Analisa Karyawan</h3>
+          <p>Karyawan paling sering mengajukan cuti adalah <b id="nama-top-karyawan" class="highlight">...</b> dengan
+            total <b id="jumlah-top-cuti" class="highlight">...</b> kali pengajuan.</p>
+        </div>
+        <div class="upcoming-card">
+          <h3><i class="fas fa-calendar-alt"></i> Jadwal Cuti Mendatang</h3>
+          <ul id="upcoming-list" class="upcoming-list">
+            <li>Memuat...</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-pengajuan" class="view">
+      <h1>Daftar Pengajuan Cuti</h1>
+      <div class="filter-container">
+        <input type="text" id="search-nama" placeholder="Cari Nama Karyawan...">
+        <select id="filter-jenis">
+          <option value="">Semua Jenis Cuti</option>
+          <option value="Libur">Libur</option>
+          <option value="Cuti Selama Hamil">Cuti Selama Hamil</option>
+          <option value="Cuti Pasca Bersalin">Cuti Pasca Bersalin</option>
+          <option value="Istri Melahirkan">Istri Melahirkan</option>
+          <option value="Operasi/Sakit Parah">Operasi/Sakit Parah</option>
+          <option value="Izin Sakit">Izin Sakit</option>
+          <option value="Keluarga Kandung Opname/Rawat inap">Keluarga Kandung Opname/Rawat inap</option>
+          <option value="Cuti Ibadah Haji">Cuti Ibadah Haji</option>
+          <option value="Cuti Umroh">Cuti Umroh</option>
+          <option value="Pernikahan Karyawan">Pernikahan Karyawan</option>
+          <option value="Keluarga Kandung Meninggal<">Keluarga Kandung Meninggal</option>
+          <option value="Pernikahan Anak Kandung">Pernikahan Anak Kandung</option>
+          <option value="Aqikah Anak Kandung">Aqikah Anak Kandung</option>
+          <option value="Sunat Anak Kandung">Sunat Anak Kandung</option>
+        </select>
+        <select id="filter-status">
+          <option value="">Semua Status</option>
+          <option value="Menunggu Persetujuan">Menunggu Persetujuan</option>
+          <option value="Disetujui">Disetujui</option>
+          <option value="Ditolak">Ditolak</option>
+        </select>
+        <button class="btn btn-primary" onclick="muatUlangTabelCuti()">Tampilkan</button>
+        <button class="btn btn-secondary" onclick="resetFilter()">Reset</button>
+        <button class="btn btn-secondary" onclick="cetakLaporan()" style="margin-left: auto;"><i
+            class="fas fa-print"></i> Cetak</button>
+      </div>
+      <div class="table-container">
+        <h2 class="print-title">Daftar Pengajuan Cuti</h2>
+        <div class="table-scroll-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Nama Karyawan</th>
+                <th>Jenis Cuti</th>
+                <th>Tanggal</th>
+                <th>Status</th>
+                <th class="aksi-header">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tabel-body-cuti"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-karyawan" class="view">
+      <h1>Manajemen Karyawan</h1>
+      <div style="margin-bottom: 20px;">
+        <button id="btn-toggle-form" class="btn btn-primary" onclick="toggleTambahKaryawanForm()">
+          <i class="fas fa-plus"></i> Tambah Karyawan Baru
+        </button>
+      </div>
+      <div id="container-form-karyawan" class="table-container" style="display: none; margin-bottom: 30px;">
+        <h3 id="judul-form-karyawan">Tambah Karyawan Baru</h3>
+        <form id="form-karyawan" class="form-grid">
+          <input type="hidden" id="karyawan-mode" value="TAMBAH">
+          <div class="form-group"> <label for="karyawan-id">ID Karyawan (NIK)</label> <input type="text"
+              id="karyawan-id" required>
+          </div>
+          <div class="form-group"> <label for="karyawan-nama">Nama Lengkap</label> <input type="text" id="karyawan-nama"
+              required>
+          </div>
+          <div class="form-group"> <label for="karyawan-email">Email</label> <input type="email" id="karyawan-email"
+              required>
+          </div>
+          <div class="form-group"> <label for="karyawan-gabung">Tanggal Bergabung</label> <input type="date"
+              id="karyawan-gabung" required>
+          </div>
+          <div class="form-group">
+            <label for="karyawan-peran">Peran</label>
+            <select id="karyawan-peran" required>
+              <option value="Karyawan">Karyawan</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="karyawan-password">Password Sementara</label>
+            <input type="text" id="karyawan-password" required>
+          </div>
+          <div class="form-group full-width"> <label for="karyawan-jatah">pengganti Libur </label> <input type="number"
+              id="karyawan-jatah" value="12" required>
+          </div>
+          <div class="form-group full-width">
+            <button type="submit" id="btn-submit-karyawan" class="btn btn-primary">Simpan Karyawan</button>
+            <button type="button" class="btn btn-secondary" onclick="resetFormKaryawan()">Batal</button>
+          </div>
+        </form>
+      </div>
+      <div class="table-container">
+        <div class="filter-container">
+          <h3>Daftar Karyawan</h3>
+          <input type="text" id="search-karyawan" placeholder="Cari ID atau Nama..." oninput="muatUlangTabelKaryawan()"
+            style="margin-left: auto;">
+        </div>
+        <div class="table-scroll-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID Karyawan</th>
+                <th>Nama Lengkap</th>
+                <th>Email</th>
+                <th>Tgl. Bergabung</th>
+                <th>Jatah Cuti</th>
+                <th class="aksi-header">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tabel-body-karyawan"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-libur" class="view">
+      <h1>Manajemen Pengganti Libur (Kerja Di Hari Libur saat dinas luar kota)</h1>
+      <div class="filter-container">
+        <button class="btn btn-primary" onclick="muatDataPengganti()"><i class="fas fa-refresh"></i> Muat Data</button>
+        <button class="btn btn-primary" onclick="toggleTambahPenggantiForm()"><i class="fas fa-plus"></i> Set Pengganti
+          Libur</button>
+      </div>
+
+      <div id="container-form-pengganti" style="display: none; margin-bottom: 20px;">
+        <div class="card">
+          <h3><i class="fas fa-gift"></i> Set Libur Tambahan untuk Karyawan</h3>
+          <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
+            ℹ️ Setelah disimpan, karyawan akan melihat notifikasi libur tambahan di dashboard mereka dan dapat
+            langsung mengambilnya.
+          </p>
+          <form id="form-pengganti" onsubmit="handleFormPenggantiSubmit(event)">
+            <div class="form-group">
+              <label for="pengganti-id-karyawan">Nama Karyawan</label>
+              <select id="pengganti-id-karyawan" required>
+                <option value="">-- Pilih Karyawan --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pengganti-durasi">Durasi Libur Tambahan (Hari)</label>
+              <input type="number" id="pengganti-durasi" min="1" max="30" required placeholder="Contoh: 5">
+            </div>
+            <div class="form-group">
+              <label for="pengganti-keterangan">Keterangan / Alasan</label>
+              <input type="text" id="pengganti-keterangan"
+                placeholder="Contoh: Pengganti tanggal merah/Hari Libur Nasional" required>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Simpan & Kirim
+              Notifikasi</button>
+            <button type="button" class="btn btn-secondary" onclick="toggleTambahPenggantiForm()"
+              style="margin-left: 10px;">Batal</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table id="tabel-pengganti">
+          <thead>
+            <tr>
+              <th>Nama Karyawan</th>
+              <th>Durasi (Hari)</th>
+              <th>Keterangan</th>
+              <th class="aksi-header">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tabel-body-pengganti"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="view-rekapan" class="view">
+      <h1>Rekapan Cuti Per Orang Tahun <span id="tahun-rekapan">2026</span></h1>
+      <div class="filter-container">
+        <button class="btn btn-primary" onclick="muatRekapanCuti()" style="margin-right: auto;"><i
+            class="fas fa-refresh"></i> Muat Data</button>
+        <button class="btn btn-primary" onclick="simpanSisaCutiKeDB()" style="background-color: #ff9800; margin-right: 10px;"><i
+            class="fas fa-save"></i> Simpan Sisa Cuti ke Spreadsheet</button>
+        <button class="btn btn-secondary" onclick="exportKeExcel()"><i class="fas fa-file-excel"></i> Export
+          Excel</button>
+        <button class="btn btn-secondary" onclick="exportKeSheet()"><i class="fas fa-download"></i> Export ke
+          Sheet</button>
+        <button class="btn btn-secondary" onclick="cetakRekapanCuti()"><i class="fas fa-print"></i> Cetak</button>
+      </div>
+      <div class="table-container">
+        <h2 class="print-title">Rekapan Cuti Per Orang Tahun <span id="tahun-rekapan-print">2026</span></h2>
+        <div class="table-scroll-wrapper" style="overflow-x: auto;">
+          <table id="tabel-rekapan-detail" style="min-width: 1700px; font-size: 11px;">
+            <thead id="rekapan-thead">
+              <tr id="rekapan-header-row" style="background-color: #f5f5f5;">
+                <th style="min-width: 40px; text-align: center;">No.</th>
+                <th style="min-width: 120px;">Nama Karyawan</th>
+                <th style="min-width: 120px; text-align: center;">Memuat kategori...</th>
+                <th style="min-width: 80px; text-align: center;">Total Cuti Libur</th>
+                <th style="min-width: 80px; text-align: center;">Jatah dipilih</th>
+                <th style="min-width: 80px; text-align: center;">Cuti sisa</th>
+              </tr>
+            </thead>
+            <tbody id="tabel-body-rekapan"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="modal-detail-cuti" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="tutupModalDetail()">&times;</span>
+      <h3>Detail Pengajuan Cuti</h3>
+      <dl class="detail-grid">
+        <dt>Nama Karyawan</dt>
+        <dd id="detail-nama"></dd>
+        <dt>ID Karyawan</dt>
+        <dd id="detail-id"></dd>
+        <dt>Sisa Cuti Tahunan</dt>
+        <dd id="detail-sisa-cuti"></dd>
+        <hr style="grid-column: 1 / 3; border: none; border-top: 1px solid #eee;">
+        <dt>Tgl. Pengajuan</dt>
+        <dd id="detail-tgl-pengajuan"></dd>
+        <dt>Jenis Cuti</dt>
+        <dd id="detail-jenis"></dd>
+        <dt>Tanggal Cuti</dt>
+        <dd id="detail-tanggal"></dd>
+        <dt>Lama Cuti</dt>
+        <dd id="detail-lama"></dd>
+        <dt>Keterangan</dt>
+        <dd id="detail-keterangan"></dd>
+      </dl>
+    </div>
+  </div>
+
+  <div id="modal-edit-pengganti" class="modal">
+    <div class="modal-content" style="width: 90%; max-width: 500px;">
+      <span class="close-button" onclick="tutupModalEditPengganti()">&times;</span>
+      <h3><i class="fas fa-edit"></i> Edit Pengganti Libur</h3>
+      <form id="form-edit-pengganti" onsubmit="handleFormEditPenggantiSubmit(event)">
+        <input type="hidden" id="edit-pengganti-id-karyawan">
+        <div class="form-group">
+          <label for="edit-pengganti-nama">Nama Karyawan</label>
+          <input type="text" id="edit-pengganti-nama" disabled style="background-color: #f5f5f5; cursor: not-allowed;">
+        </div>
+        <div class="form-group">
+          <label for="edit-pengganti-durasi">Durasi Libur Tambahan (Hari)</label>
+          <input type="number" id="edit-pengganti-durasi" min="1" max="30" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-pengganti-keterangan">Keterangan / Alasan</label>
+          <input type="text" id="edit-pengganti-keterangan" required>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" onclick="tutupModalEditPengganti()">Batal</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-detail-rekapan" class="modal">
+    <div class="modal-content" style="width: 90%; max-width: 700px;">
+      <span class="close-button" onclick="tutupModalDetailRekapan()">&times;</span>
+      <h3 id="modal-rekapan-judul">Detail Riwayat Cuti</h3>
+      <dl class="detail-grid">
+        <dt>Nama Karyawan</dt>
+        <dd id="rekapan-nama"></dd>
+        <dt>ID Karyawan</dt>
+        <dd id="rekapan-id"></dd>
+        <dt>Pengganti Libur</dt>
+        <dd id="rekapan-jatah"></dd>
+        <dt>Total Diambil</dt>
+        <dd id="rekapan-total"></dd>
+        <dt>Sisa Cuti</dt>
+        <dd id="rekapan-sisa"></dd>
+      </dl>
+      <h4 style="margin-top: 20px; margin-bottom: 10px;">Riwayat Cuti:</h4>
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background-color: #f0f0f0;">
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Tanggal Mulai</th>
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Tanggal Selesai</th>
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Hari</th>
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Kategori</th>
+          </tr>
+        </thead>
+        <tbody id="rekapan-riwayat-body">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // ===== SESSION MANAGEMENT =====
+    let sessionTimerInterval = null;
+    const SESSION_DURATION = 30 * 60 * 1000; // 30 menit dalam millisecond
+    const WARNING_TIME = 5 * 60 * 1000; // Alert 5 menit sebelum expired
+
+    function initSessionTimer() {
+      const loginTimestamp = localStorage.getItem('loginTimestamp');
+      if (!loginTimestamp) {
+        console.log('Tidak ada timestamp login, redirect ke login');
+        redirectToLogin();
+        return;
+      }
+
+      // Update timer setiap 1 detik
+      if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+      
+      sessionTimerInterval = setInterval(() => {
+        updateSessionTimer();
+      }, 1000);
+
+      // Cek session saat halaman dimuat
+      updateSessionTimer();
+    }
+
+    function updateSessionTimer() {
+      const loginTimestamp = parseInt(localStorage.getItem('loginTimestamp'));
+      const currentTime = new Date().getTime();
+      const elapsedTime = currentTime - loginTimestamp;
+      const remainingTime = SESSION_DURATION - elapsedTime;
+
+      if (remainingTime <= 0) {
+        // Session expired
+        clearInterval(sessionTimerInterval);
+        localStorage.removeItem('sessionToken');
+        localStorage.removeItem('loginTimestamp');
+        localStorage.removeItem('userRole');
+        Swal.fire('Session Expired', 'Sesi Anda telah berakhir. Silakan login kembali.', 'warning').then(() => {
+          redirectToLogin();
+        });
+        return;
+      }
+
+      // Convert remaining time ke format menit:detik
+      const minutes = Math.floor(remainingTime / 60000);
+      const seconds = Math.floor((remainingTime % 60000) / 1000);
+      const timeString = `${minutes}m ${seconds}s tersisa`;
+
+      const timerElement = document.getElementById('session-timer');
+      if (timerElement) {
+        timerElement.textContent = timeString;
+
+        // Warning: kurang dari 5 menit
+        if (remainingTime < WARNING_TIME && remainingTime > 0) {
+          timerElement.classList.add('warning');
+        } else if (remainingTime <= 0) {
+          timerElement.classList.add('danger');
+        } else {
+          timerElement.classList.remove('warning', 'danger');
+        }
+      }
+    }
+
+    function handleLogout() {
+      Swal.fire({
+        title: 'Logout?',
+        text: 'Apakah Anda yakin ingin keluar?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Logout',
+        cancelButtonText: 'Batal'
+      }).then(result => {
+        if (result.isConfirmed) {
+          // Hapus semua session data
+          localStorage.removeItem('sessionToken');
+          localStorage.removeItem('loginTimestamp');
+          localStorage.removeItem('userRole');
+          sessionStorage.removeItem('sessionToken');
+          
+          clearInterval(sessionTimerInterval);
+          
+          Swal.fire('Logout Berhasil', 'Anda telah logout.', 'success').then(() => {
+            redirectToLogin();
+          });
+        }
+      });
+    }
+
+    function redirectToLogin() {
+      clearInterval(sessionTimerInterval);
+      
+      google.script.run.withSuccessHandler(htmlContent => {
+        document.open();
+        document.write(htmlContent);
+        document.close();
+      }).getLoginPage();
+    }
+
+    // Cek session saat halaman dimuat
+    document.addEventListener("DOMContentLoaded", function () {
+      initSessionTimer();
+    });
+
+    function showView(viewName) {
+      document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+      document.getElementById('view-' + viewName).classList.add('active');
+      document.querySelectorAll('.sidebar-menu a').forEach(menu => menu.classList.remove('active'));
+      document.getElementById('menu-' + viewName).classList.add('active');
+      if (viewName === 'dashboard') {
+        google.script.run.withSuccessHandler(updateDashboard).getDashboardData();
+      } else if (viewName === 'pengajuan') {
+        muatUlangTabelCuti();
+      } else if (viewName === 'karyawan') {
+        muatUlangTabelKaryawan();
+      } else if (viewName === 'libur') {
+        muatDataPengganti();
+      } else if (viewName === 'rekapan') {
+        muatRekapanCuti();
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      google.script.run.withSuccessHandler(updateDashboard).getDashboardData();
+      muatUlangTabelKaryawan();
+      const formKaryawan = document.getElementById('form-karyawan');
+      if (formKaryawan) {
+        formKaryawan.addEventListener('submit', handleFormKaryawanSubmit);
+      }
+      const formPengganti = document.getElementById('form-pengganti');
+      if (formPengganti) {
+        formPengganti.addEventListener('submit', handleFormPenggantiSubmit);
+      }
+    });
+
+    function toggleTambahKaryawanForm() {
+      const container = document.getElementById('container-form-karyawan');
+      if (container.style.display === 'none' || container.style.display === '') {
+        resetFormKaryawan();
+        container.style.display = 'block';
+      } else {
+        container.style.display = 'none';
+      }
+    }
+
+    function resetFormKaryawan() {
+      const form = document.getElementById('form-karyawan');
+      const container = document.getElementById('container-form-karyawan');
+      form.reset();
+      document.getElementById('karyawan-mode').value = "TAMBAH";
+      document.getElementById('judul-form-karyawan').textContent = "Tambah Karyawan Baru";
+      document.getElementById('btn-submit-karyawan').textContent = "Simpan Karyawan";
+      document.getElementById('karyawan-id').disabled = false;
+      document.getElementById('karyawan-password').style.display = 'block';
+      document.querySelector('label[for="karyawan-password"]').style.display = 'block';
+      container.style.display = 'none';
+    }
+
+    function handleFormKaryawanSubmit(e) {
+      e.preventDefault();
+      const mode = document.getElementById('karyawan-mode').value;
+      let dataKaryawan = {
+        id: document.getElementById('karyawan-id').value,
+        nama: document.getElementById('karyawan-nama').value,
+        email: document.getElementById('karyawan-email').value,
+        tanggalBergabung: document.getElementById('karyawan-gabung').value,
+        jatahCuti: document.getElementById('karyawan-jatah').value
+      };
+      if (mode === 'TAMBAH') {
+        dataKaryawan.peran = document.getElementById('karyawan-peran').value;
+        dataKaryawan.passwordSementara = document.getElementById('karyawan-password').value;
+      }
+      const payload = { action: mode, data: dataKaryawan };
+      Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      google.script.run.withSuccessHandler(response => {
+        if (response.startsWith('Error')) {
+          Swal.fire('Gagal', response, 'error');
+        } else {
+          Swal.fire('Berhasil', response, 'success');
+          resetFormKaryawan();
+          muatUlangTabelKaryawan();
+        }
+      }).kelolaKaryawan(payload);
+    }
+
+    function handleEditKaryawan(id) {
+      google.script.run.withSuccessHandler(data => {
+        if (data.error) {
+          Swal.fire('Gagal!', data.error, 'error');
+          return;
+        }
+        document.getElementById('karyawan-id').value = data.id;
+        document.getElementById('karyawan-nama').value = data.nama;
+        document.getElementById('karyawan-email').value = data.email;
+        document.getElementById('karyawan-gabung').value = data.tanggalBergabung;
+        document.getElementById('karyawan-jatah').value = data.jatahCuti;
+        document.getElementById('karyawan-peran').value = data.peran || 'Karyawan';
+        document.getElementById('karyawan-mode').value = "UPDATE";
+        document.getElementById('judul-form-karyawan').textContent = "Edit Data Karyawan";
+        document.getElementById('btn-submit-karyawan').textContent = "Simpan Perubahan";
+        document.getElementById('karyawan-id').disabled = true;
+        document.getElementById('karyawan-password').style.display = 'none';
+        document.querySelector('label[for="karyawan-password"]').style.display = 'none';
+        document.getElementById('container-form-karyawan').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }).getKaryawanById(id);
+    }
+
+    function muatUlangTabelKaryawan() {
+      console.log('muatUlangTabelKaryawan called');
+      const searchTerm = document.getElementById('search-karyawan').value;
+      console.log('Search term:', searchTerm);
+      google.script.run
+        .withSuccessHandler(data => {
+          console.log('Success handler received:', data);
+          updateTabelKaryawan(data);
+        })
+        .withFailureHandler(error => {
+          console.error('Error loading karyawan:', error);
+        })
+        .getKaryawanFullList(searchTerm);
+    }
+
+    function updateTabelKaryawan(data) {
+      console.log('updateTabelKaryawan called with data:', data);
+      const tbody = document.getElementById('tabel-body-karyawan');
+      tbody.innerHTML = '';
+      if (!data || data.error || data.length === 0) {
+        console.log('No data or error:', data);
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Tidak ada data karyawan.</td></tr>`;
+        return;
+      }
+      console.log('Rendering', data.length, 'karyawan');
+      data.forEach((karyawan, index) => {
+        console.log('Row', index, ':', karyawan);
+        let row = tbody.insertRow();
+        row.innerHTML = `
+                    <td>${karyawan.id || '-'}</td>
+                    <td><b>${karyawan.nama || '-'}</b></td>
+                    <td>${karyawan.email || '-'}</td>
+                    <td>${karyawan.tanggalBergabung || '-'}</td>
+                    <td>${karyawan.jatahCuti || '-'}</td>
+                    <td class="action-buttons aksi-cell">
+                        <button title="Edit" onclick="handleEditKaryawan('${karyawan.id}')"><i class="fas fa-edit"></i></button>
+                        <button title="Hapus" onclick="handleHapusKaryawan('${karyawan.id}')"><i class="fas fa-trash-alt"></i></button>
+                    </td>
+                `;
+      });
+    }
+
+    function handleHapusKaryawan(id) {
+      Swal.fire({
+        title: 'Anda yakin?', text: `Karyawan dengan ID ${id} akan dihapus.`, icon: 'warning',
+        showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!', cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          google.script.run.withSuccessHandler(response => {
+            if (response.startsWith('Error')) { Swal.fire('Gagal!', response, 'error'); }
+            else { Swal.fire('Terhapus!', response, 'success'); muatUlangTabelKaryawan(); }
+          }).hapusKaryawan(id);
+        }
+      });
+    }
+
+    function muatUlangTabelCuti() {
+      const tbody = document.getElementById('tabel-body-cuti');
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Memuat data...</td></tr>`;
+      const filter = { nama: document.getElementById('search-nama').value, jenisCuti: document.getElementById('filter-jenis').value, status: document.getElementById('filter-status').value };
+      google.script.run.withSuccessHandler(updateTabelCuti).getPengajuanCutiList(filter);
+    }
+
+    function resetFilter() {
+      document.getElementById('search-nama').value = '';
+      document.getElementById('filter-jenis').selectedIndex = 0;
+      document.getElementById('filter-status').selectedIndex = 0;
+      muatUlangTabelCuti();
+    }
+
+    function updateTabelCuti(data) {
+      const tbody = document.getElementById('tabel-body-cuti');
+      tbody.innerHTML = '';
+      if (data.error || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Tidak ada data.</td></tr>`;
+        return;
+      }
+      data.forEach(cuti => {
+        let row = tbody.insertRow();
+        const isDisabled = cuti.status !== 'Menunggu Persetujuan' ? 'disabled' : '';
+
+        // Tampilkan button preview dokumen jika ada link gambar
+        const dokumenButton = cuti.linkGambar ?
+          `<button title="Lihat Dokumen" onclick="handlePreviewDokumen('${cuti.linkGambar}')"><i class="fas fa-file-image"></i></button>` :
+          '';
+
+        row.innerHTML = `
+                    <td><b>${cuti.namaKaryawan}</b><br><small>${cuti.idKaryawan}</small></td>
+                    <td>${cuti.jenisCuti}</td>
+                    <td>${cuti.tglMulai} - ${cuti.tglSelesai} (${cuti.jumlahHari} hari)</td>
+                    <td><span class="status status-${cuti.status.toLowerCase().replace(/ /g, '-')}">${cuti.status}</span></td>
+                    <td class="action-buttons aksi-cell">
+                        <button title="Setujui" onclick="handlePersetujuan('${cuti.idPengajuan}', 'Disetujui')" ${isDisabled}><i class="fas fa-check-circle"></i></button>
+                        <button title="Tolak" onclick="handlePersetujuan('${cuti.idPengajuan}', 'Ditolak')" ${isDisabled}><i class="fas fa-times-circle"></i></button>
+                        ${dokumenButton}
+                        <button title="Lihat Detail" onclick="handleDetailCuti('${cuti.idPengajuan}')"><i class="fas fa-info-circle"></i></button>
+                    </td>
+                `;
+      });
+    }
+
+    function handlePersetujuan(id, status) {
+      const Aksi = status === 'Disetujui' ? 'Menyetujui' : 'Menolak';
+      Swal.fire({
+        title: `Anda yakin akan ${Aksi.toLowerCase()} pengajuan ini?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          google.script.run.withSuccessHandler(response => {
+            if (response.startsWith('Error')) {
+              Swal.fire('Gagal!', response, 'error');
+            } else {
+              Swal.fire('Berhasil!', response, 'success');
+              muatUlangTabelCuti();
+            }
+          }).updateStatusCuti(id, status);
+        }
+      });
+    }
+
+    const modalDetail = document.getElementById('modal-detail-cuti');
+    function handleDetailCuti(id) {
+      google.script.run.withSuccessHandler(data => {
+        if (data.error) {
+          Swal.fire('Gagal!', data.error, 'error');
+          return;
+        }
+        document.getElementById('detail-nama').textContent = data.nama;
+        document.getElementById('detail-id').textContent = data.idKaryawan;
+        document.getElementById('detail-sisa-cuti').textContent = `${data.sisaCuti} hari`;
+        document.getElementById('detail-tgl-pengajuan').textContent = data.tanggalPengajuan;
+        document.getElementById('detail-jenis').textContent = data.jenisCuti;
+        document.getElementById('detail-tanggal').textContent = data.tanggalCuti;
+        document.getElementById('detail-lama').textContent = `${data.lamaCuti} hari`;
+        document.getElementById('detail-keterangan').textContent = data.keterangan || '-';
+
+        // Tampilkan dokumen jika ada
+        const dokumenSection = document.getElementById('detail-dokumen') || document.createElement('div');
+        if (data.linkGambar && data.linkGambar.trim() !== '') {
+          dokumenSection.id = 'detail-dokumen';
+          dokumenSection.innerHTML = `
+                        <p><strong>Dokumen:</strong> <a href="${data.linkGambar}" target="_blank" onclick="handlePreviewDokumen('${data.linkGambar}'); return false;"><i class="fas fa-file-image"></i> Lihat Dokumen</a></p>
+                    `;
+          if (!document.getElementById('detail-dokumen')) {
+            modalDetail.querySelector('.modal-content').appendChild(dokumenSection);
+          }
+        }
+
+        modalDetail.style.display = 'block';
+      }).getDetailCuti(id);
+    }
+
+    function tutupModalDetail() {
+      modalDetail.style.display = 'none';
+    }
+
+    function handlePreviewDokumen(linkGambar) {
+      Swal.fire({
+        title: 'Preview Dokumen',
+        html: `<img src="${linkGambar}" style="max-width: 100%; max-height: 500px; border-radius: 8px;">`,
+        icon: 'info',
+        confirmButtonText: 'Tutup',
+        footer: `<a href="${linkGambar}" target="_blank" style="color: #6842F5; text-decoration: none;"><i class="fas fa-download"></i> Download Dokumen</a>`
+      });
+    }
+
+    window.addEventListener('click', function (event) {
+      if (event.target == modalDetail) {
+        tutupModalDetail();
+      }
+    });
+
+    function cetakLaporan() { window.print(); }
+
+    function updateDashboard(data) {
+      if (data.error) { console.error(data.error); return; }
+      console.log('Dashboard data received:', data);
+      document.getElementById('stat-karyawan').textContent = data.jumlahKaryawan;
+      document.getElementById('stat-pengajuan').textContent = data.pengajuanBaru;
+      document.getElementById('jumlah-pengajuan-cuti').textContent = data.sedangCuti;
+      document.getElementById('nama-top-karyawan').textContent = data.topKaryawanCuti.nama;
+      document.getElementById('jumlah-top-cuti').textContent = data.topKaryawanCuti.jumlah;
+      console.log('Calling buatGrafikDistribusi with:', data.distribusiJenis);
+      buatGrafikDistribusi(data.distribusiJenis);
+      updateListCutiMendatang(data.cutiMendatang);
+
+      // Panggil fungsi untuk grafik kategori cuti
+      console.log('Requesting getDetailDistribusiKategoriCuti...');
+      google.script.run.withSuccessHandler(response => {
+        console.log('getDetailDistribusiKategoriCuti response:', response);
+        buatGrafikKategoriCuti(response);
+      }).getDetailDistribusiKategoriCuti();
+
+      // Panggil fungsi untuk grafik karyawan yang sedang cuti
+      console.log('Requesting getJumlahKaryawanCutiPerKategori...');
+      google.script.run.withSuccessHandler(response => {
+        console.log('getJumlahKaryawanCutiPerKategori response:', response);
+        buatGrafikKaryawanCuti(response);
+      }).getJumlahKaryawanCutiPerKategori();
+    }
+
+    let trenChartInstance, distribusiChartInstance, kategoriChartInstance, karyawanCutiChartInstance;
+
+    // Helper: convert hex to rgba
+    function hexToRgba(hex, alpha = 1) {
+      const sanitized = hex.replace('#', '');
+      const bigint = parseInt(sanitized, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function buatGrafikTren(trenData) {
+      const ctx = document.getElementById('trenChart').getContext('2d');
+      const labels = Object.keys(trenData).sort();
+      const values = labels.map(label => trenData[label]);
+      const gradient = ctx.createLinearGradient(0, 0, 0, 250);
+      gradient.addColorStop(0, 'rgba(106, 13, 173, 0.3)');
+      gradient.addColorStop(1, 'rgba(106, 13, 173, 0)');
+      if (trenChartInstance) trenChartInstance.destroy();
+      trenChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: [{ label: 'Jumlah Pengajuan', data: values, borderColor: '#6842F5', backgroundColor: gradient, fill: true, pointStyle: 'circle', pointRadius: 4, pointHoverRadius: 6, tension: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { display: true } }, y: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 } } }, plugins: { legend: { display: true, position: 'top', align: 'center', labels: { usePointStyle: true } } }, layout: { padding: { top: 10, right: 10, bottom: 25, left: 10 } } }
+      });
+    }
+
+    function buatGrafikDistribusi(distribusiData) {
+      console.log('buatGrafikDistribusi called with:', distribusiData);
+      const canvasElement = document.getElementById('distribusiChart');
+      if (!canvasElement) {
+        console.error('Canvas element #distribusiChart not found!');
+        return;
+      }
+      const ctx = canvasElement.getContext('2d');
+      const labels = Object.keys(distribusiData);
+      const values = Object.values(distribusiData);
+      const palette = ['#6842F5', '#FF9F40', '#36A2EB', '#4BC0C0', '#9966FF', '#FF6384', '#22C55E', '#EAB308', '#0EA5E9', '#EC4899', '#8B5CF6', '#14B8A6'];
+      const backgroundColor = labels.map((_, idx) => hexToRgba(palette[idx % palette.length], 0.8));
+      const borderColor = labels.map((_, idx) => hexToRgba(palette[idx % palette.length], 1));
+      if (distribusiChartInstance) distribusiChartInstance.destroy();
+      distribusiChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: labels, datasets: [{ label: 'Jumlah Pengajuan', data: values, backgroundColor, borderColor, borderWidth: 1, borderRadius: 5, barThickness: 40 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false, }, title: { display: false, } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 12 } } }, y: { beginAtZero: true, ticks: { precision: 0, font: { size: 12 } }, grid: { color: '#e0e0e0' } } }, layout: { padding: { top: 10, right: 10, bottom: 25, left: 10 } } }
+      });
+    }
+
+    function buatGrafikKategoriCuti(data) {
+      console.log('buatGrafikKategoriCuti called with:', data);
+      if (!data || data.error) {
+        console.error('Error loading kategori cuti data:', data);
+        return;
+      }
+
+      const kategoriDetail = data.kategoriDetail;
+      const labels = [];
+      const percentages = [];
+      const jumlahKaryawan = [];
+      const palette = ['#6842F5', '#FF9F40', '#36A2EB', '#4BC0C0', '#9966FF', '#FF6384', '#22C55E', '#EAB308', '#0EA5E9', '#EC4899', '#8B5CF6', '#14B8A6'];
+      for (const kategori in kategoriDetail) {
+        const detail = kategoriDetail[kategori];
+        labels.push(`${kategori}\n(${detail.persentase}%)`);
+        percentages.push(detail.persentase);
+        jumlahKaryawan.push(detail.jumlahKaryawan);
+      }
+      const backgroundColor = labels.map((_, idx) => hexToRgba(palette[idx % palette.length], 0.8));
+      const borderColors = labels.map((_, idx) => hexToRgba(palette[idx % palette.length], 1));
+
+      const canvasElement = document.getElementById('kategoriChart');
+      if (!canvasElement) {
+        console.error('Canvas element #kategoriChart not found!');
+        return;
+      }
+
+      const ctx = canvasElement.getContext('2d');
+      if (kategoriChartInstance) kategoriChartInstance.destroy();
+
+      kategoriChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Persentase Karyawan (%)',
+              data: percentages,
+              backgroundColor,
+              borderColor: borderColors,
+              borderWidth: 1,
+              borderRadius: 5,
+              yAxisID: 'y',
+              barThickness: 50
+            },
+            {
+              label: 'Jumlah Karyawan',
+              data: jumlahKaryawan,
+              backgroundColor: 'rgba(200, 200, 200, 0.3)',
+              borderColor: 'rgba(100, 100, 100, 0.5)',
+              borderWidth: 1,
+              borderRadius: 5,
+              yAxisID: 'y1',
+              barThickness: 50,
+              type: 'line',
+              fill: false,
+              tension: 0.3,
+              pointBackgroundColor: backgroundColor,
+              pointBorderColor: borderColors,
+              pointBorderWidth: 2,
+              pointRadius: 5,
+              pointHoverRadius: 7
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                font: { size: 12 }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  if (context.datasetIndex === 0) {
+                    return context.dataset.label + ': ' + context.parsed.y + '%';
+                  } else {
+                    return context.dataset.label + ': ' + context.parsed.y + ' orang';
+                  }
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 11 } }
+            },
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: function (value) {
+                  return value + '%';
+                },
+                font: { size: 11 }
+              },
+              grid: { color: '#e0e0e0' }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              beginAtZero: true,
+              ticks: {
+                callback: function (value) {
+                  return value + ' orang';
+                },
+                font: { size: 11 }
+              },
+              grid: { drawOnChartArea: false }
+            }
+          },
+          layout: { padding: { top: 10, right: 10, bottom: 25, left: 10 } }
+        }
+      });
+    }
+
+    function buatGrafikKaryawanCuti(data) {
+      console.log('buatGrafikKaryawanCuti called with:', data);
+      if (!data || data.error) {
+        console.error('Error loading karyawan cuti data:', data);
+        return;
+      }
+
+      const kategoriData = data.kategoriData;
+      const labels = [];
+      const jumlahCuti = [];
+      const palette = ['#6842F5', '#FF9F40', '#36A2EB', '#4BC0C0', '#9966FF', '#FF6384', '#22C55E', '#EAB308', '#0EA5E9', '#EC4899', '#8B5CF6', '#14B8A6'];
+      const hasData = kategoriData && Object.keys(kategoriData).length > 0;
+      if (hasData) {
+        for (const kategori in kategoriData) {
+          const detail = kategoriData[kategori];
+          labels.push(kategori);
+          jumlahCuti.push(detail.sedangCuti);
+        }
+      } else {
+        labels.push('Tidak ada karyawan yang sedang cuti');
+        jumlahCuti.push(0);
+      }
+      const backgroundColor = labels.map((_, idx) => hexToRgba(palette[idx % palette.length], 0.8));
+      const borderColors = labels.map((_, idx) => hexToRgba(palette[idx % palette.length], 1));
+
+      const canvasElement = document.getElementById('karyawanCutiChart');
+      if (!canvasElement) {
+        console.error('Canvas element #karyawanCutiChart not found!');
+        return;
+      }
+      const ctx = canvasElement.getContext('2d');
+      if (karyawanCutiChartInstance) karyawanCutiChartInstance.destroy();
+
+      karyawanCutiChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Jumlah Karyawan yang Sedang Cuti',
+              data: jumlahCuti,
+              backgroundColor,
+              borderColor: borderColors,
+              borderWidth: 2,
+              borderRadius: 8,
+              barThickness: 60
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                font: { size: 13, weight: 'bold' }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  return context.dataset.label + ': ' + context.parsed.y + ' orang';
+                },
+                afterLabel: function (context) {
+                  const kategori = context.label;
+                  const totalKaryawan = data.totalKaryawan;
+                  const persentase = totalKaryawan > 0 ? Math.round((context.parsed.y / totalKaryawan) * 100) : 0;
+                  return hasData ? 'Persentase: ' + persentase + '% dari total karyawan' : 'Belum ada karyawan yang sedang cuti';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 12, weight: 'bold' } }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function (value) {
+                  return value + ' orang';
+                },
+                font: { size: 11 }
+              },
+              grid: { color: '#e0e0e0' }
+            }
+          },
+          layout: { padding: { top: 10, right: 10, bottom: 25, left: 10 } }
+        }
+      });
+    }
+
+    function updateListCutiMendatang(listData) {
+      const listElement = document.getElementById('upcoming-list');
+      listElement.innerHTML = '';
+      if (!listData || listData.length === 0) {
+        listElement.innerHTML = '<li>Tidak ada jadwal cuti mendatang.</li>';
+        return;
+      }
+      listData.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `<div><b>${item.nama}</b><div class="details">${item.jenis} (${item.lama} hari)</div></div> <b>${item.mulai} - ${item.selesai}</b>`;
+        listElement.appendChild(li);
+      });
+    }
+
+    // Bangun header tabel rekapan berdasarkan kategori yang diterima dari backend
+    function buildRekapanHeader(allKategori = []) {
+      const thead = document.querySelector('#tabel-rekapan-detail thead');
+      if (!thead) return;
+
+      thead.innerHTML = '';
+
+      const headerRow = document.createElement('tr');
+      headerRow.style.backgroundColor = '#f5f5f5';
+
+      const addTh = (text, style) => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        if (style) th.setAttribute('style', style);
+        headerRow.appendChild(th);
+      };
+
+      addTh('No.', 'min-width: 40px; text-align: center;');
+      addTh('Nama Karyawan', 'min-width: 120px;');
+
+      allKategori.forEach(kategori => {
+        addTh(kategori, 'min-width: 90px; text-align: center;');
+      });
+
+      addTh('Total Cuti', 'min-width: 90px; text-align: center; font-weight: bold; background: #ffe0b2;');
+      addTh('Jatah Tahunan', 'min-width: 90px; text-align: center; font-weight: bold; background: #e1f5fe;');
+      addTh('Sisa Cuti', 'min-width: 90px; text-align: center; font-weight: bold; background: #c8e6c9;');
+
+      thead.appendChild(headerRow);
+    }
+
+    // === FUNGSI REKAPAN CUTI ===
+    function muatRekapanCuti() {
+      Swal.fire({ title: 'Memuat...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      google.script.run.withSuccessHandler(tampilkanRekapanCutiDetail).getRekapanCutiDetail();
+    }
+
+    function tampilkanRekapanCutiDetail(data) {
+      Swal.close();
+      if (data.error) {
+        Swal.fire('Gagal!', data.error, 'error');
+        return;
+      }
+
+      const daftarRekapan = data.daftarRekapan;
+      const tahun = data.tahun;
+      const allKategori = data.allKategori;
+
+      document.getElementById('tahun-rekapan').textContent = tahun;
+      document.getElementById('tahun-rekapan-print').textContent = tahun;
+
+      // Sesuaikan header tabel dengan kategori yang dikirim backend
+      buildRekapanHeader(allKategori || []);
+
+      const tbody = document.getElementById('tabel-body-rekapan');
+      tbody.innerHTML = '';
+
+      const totalKolom = 2 + (allKategori ? allKategori.length : 0) + 3; // No + Nama + kategori + total/jatah/sisa
+
+      if (!daftarRekapan || daftarRekapan.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${totalKolom}" style="text-align:center;">Tidak ada data cuti.</td></tr>`;
+        return;
+      }
+
+      daftarRekapan.forEach((item, index) => {
+        const row = tbody.insertRow();
+        const sisaCutiClass = item.sisaCuti < 0 ? 'color: red; font-weight: bold;' : 'color: green; font-weight: bold;';
+
+        let rowHTML = `
+                    <td style="text-align: center; font-weight: bold;">${index + 1}</td>
+                    <td>${item.nama}</td>
+                `;
+
+        // Tambahkan kolom untuk setiap kategori
+        allKategori.forEach(kategori => {
+          const jumlah = item.kategoriCount[kategori] || 0;
+          rowHTML += `<td style="text-align: center;">${jumlah}</td>`;
+        });
+
+        // Tambahkan kolom Total, Jatah, dan Sisa dengan background color
+        // ✨ TOTAL CUTI = JUMLAH KATEGORI yang diambil (bukan jumlah hari)
+        // ✨ JATAH TAHUNAN BERKURANG: Jatah Awal - Total Hari Cuti Diambil (TANPA Izin Sakit & Pengganti Libur)
+        // ✨ SISA CUTI = Jatah Tahunan (yang sudah berkurang) - 0 (karena keduanya sama)
+        rowHTML += `
+                    <td style="text-align: center; font-weight: bold; background-color: #fff3e0;" title="Total hari cuti yang diambil (TANPA Izin Sakit & Pengganti Libur, tahun ${data.tahun})">${item.totalCutiDiambil}</td>
+                    <td style="text-align: center; font-weight: bold; background-color: #e1f5fe;" title="Jatah Cuti Tahunan yang BERKURANG setelah mengambil cuti (Jatah Awal - Total Cuti Diambil)">${item.jatahCutiTahunan}</td>
+                    <td style="text-align: center; ${sisaCutiClass}; background-color: #f1f8e9;" title="Sisa Cuti = Jatah Tahunan (setelah berkurang)">${item.sisaCuti}</td>
+                `;
+
+        row.innerHTML = rowHTML;
+      });
+
+      // Simpan data global untuk keperluan lain
+      window.dataRekapanGlobal = daftarRekapan;
+    }
+
+    function tampilkanDetailRekapan(index) {
+      // Fungsi ini bisa digunakan untuk menampilkan detail lebih lanjut jika diperlukan
+      const data = window.dataRekapanGlobal[index];
+      if (!data) return;
+
+      // Untuk sekarang, detail sudah ditampilkan di tabel utama
+      Swal.fire('Info', `Nama: ${data.nama}\nTotal Cuti: ${data.totalCutiDiambil} hari\nJatah Tahun Ini: ${data.jatahCutiTahunan} hari\nSisa: ${data.sisaCuti} hari`, 'info');
+    }
+
+    function exportKeSheet() {
+      Swal.fire({
+        title: 'Export Rekapan Cuti ke Sheet',
+        text: 'Ini akan membuat sheet baru dengan data rekapan cuti. Lanjutkan?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Export',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({ title: 'Mengexport...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          google.script.run.withSuccessHandler(response => {
+            Swal.close();
+            if (response.error) {
+              Swal.fire('Gagal!', response.error, 'error');
+            } else {
+              Swal.fire('Berhasil!', response.message, 'success');
+            }
+          }).withFailureHandler(error => {
+            Swal.close();
+            Swal.fire('Error!', error.toString(), 'error');
+          }).exportRekapanCutiToSheet();
+        }
+      });
+    }
+
+    function exportKeExcel() {
+      Swal.fire({
+        title: 'Export ke Excel (.xlsx)',
+        text: 'File akan dibuat dan otomatis diunduh.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Export',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({ title: 'Menyiapkan Excel...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          google.script.run.withSuccessHandler(response => {
+            Swal.close();
+            if (response.error) {
+              Swal.fire('Gagal!', response.error, 'error');
+              return;
+            }
+            const link = response.downloadUrl;
+            if (link) {
+              // Buka link untuk memicu unduhan
+              window.open(link, '_blank');
+              Swal.fire('Berhasil!', 'File Excel sedang diunduh.', 'success');
+            } else {
+              Swal.fire('Gagal!', 'Link unduhan tidak tersedia.', 'error');
+            }
+          }).withFailureHandler(error => {
+            Swal.close();
+            Swal.fire('Error!', error.toString(), 'error');
+          }).exportRekapanCutiToExcel();
+        }
+      });
+    }
+
+    function tutupModalDetailRekapan() {
+      document.getElementById('modal-detail-rekapan').style.display = 'none';
+    }
+
+    function cetakRekapanCuti() {
+      window.print();
+    }
+
+    // FUNGSI BARU: Simpan sisa cuti ke spreadsheet
+    function simpanSisaCutiKeDB() {
+      Swal.fire({
+        title: 'Simpan Sisa Cuti ke Spreadsheet?',
+        text: '✨ Data sisa cuti akan dibuat/diupdate di sheet "Sisa Cuti TAHUN" dengan format SAMA seperti rekapan di sini.\n\nSheet ini akan otomatis ter-update setiap kali ada perubahan cuti.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Simpan',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: 'Sedang Menyimpan...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+          });
+
+          google.script.run.withSuccessHandler(response => {
+            Swal.close();
+            if (response.sukses) {
+              Swal.fire({
+                title: 'Berhasil!',
+                html: response.pesan + '<br><br><small>Sheet: <strong>' + response.sheetName + '</strong></small>',
+                icon: 'success'
+              });
+            } else {
+              Swal.fire('Gagal!', response.pesan, 'error');
+            }
+          }).withFailureHandler(error => {
+            Swal.close();
+            Swal.fire('Error!', 'Terjadi kesalahan: ' + error.message, 'error');
+          }).simpanSisaCutiKeSpreadsheet();
+        }
+      });
+    }
+
+    window.addEventListener('click', function (event) {
+      const modal = document.getElementById('modal-detail-rekapan');
+      if (event.target == modal) {
+        tutupModalDetailRekapan();
+      }
+    });
+
+    // ===== FUNGSI PENGGANTI LIBUR =====
+    function toggleTambahPenggantiForm() {
+      const container = document.getElementById('container-form-pengganti');
+      if (container.style.display === 'none' || container.style.display === '') {
+        container.style.display = 'block';
+        muatDaftarKaryawanPengganti();
+      } else {
+        container.style.display = 'none';
+      }
+    }
+
+    function muatDaftarKaryawanPengganti() {
+      console.log('muatDaftarKaryawanPengganti() dipanggil');
+      google.script.run.withSuccessHandler(karyawanList => {
+        console.log('Success handler: Daftar karyawan diterima:', karyawanList);
+        const select = document.getElementById('pengganti-id-karyawan');
+        if (!select) {
+          console.error('ERROR: Elemen select#pengganti-id-karyawan tidak ditemukan!');
+          return;
+        }
+        select.innerHTML = '<option value="">-- Pilih Karyawan --</option>';
+
+        if (karyawanList && Array.isArray(karyawanList) && karyawanList.length > 0) {
+          karyawanList.forEach(k => {
+            console.log('Tambah option:', k.id, '|', k.nama);
+            const option = document.createElement('option');
+            option.value = k.id;
+            option.textContent = k.nama;
+            select.appendChild(option);
+          });
+          console.log('Total karyawan ditambahkan:', karyawanList.length);
+        } else {
+          console.log('Daftar karyawan kosong atau error:', karyawanList);
+        }
+      }).withFailureHandler(error => {
+        console.error('Error loading karyawan:', error);
+        Swal.fire('Error', 'Gagal memuat daftar karyawan: ' + error, 'error');
+      }).getKaryawanFullList('');
+    }
+
+    function muatDataPengganti() {
+      google.script.run.withSuccessHandler(updateTabelPengganti).getAllPenggantiLibur();
+    }
+
+    function updateTabelPengganti(data) {
+      console.log('updateTabelPengganti called with data:', data);
+      const tbody = document.getElementById('tabel-body-pengganti');
+      if (!tbody) {
+        console.error('ERROR: Elemen #tabel-body-pengganti tidak ditemukan!');
+        return;
+      }
+      tbody.innerHTML = '';
+
+      if (!data || data.error || data.length === 0) {
+        console.log('No pengganti libur data to display');
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data pengganti libur.</td></tr>';
+        return;
+      }
+
+      console.log('Displaying ' + data.length + ' records');
+      data.forEach((pengganti, index) => {
+        console.log('Row ' + index + ':', pengganti);
+        let row = tbody.insertRow();
+        row.innerHTML = `
+                    <td>${pengganti.namaKaryawan || '-'}</td>
+                    <td style="text-align: center;"><strong>${pengganti.durasi}</strong></td>
+                    <td>${pengganti.keterangan}</td>
+                    <td class="action-buttons aksi-cell">
+                        <button title="Edit" onclick="handleEditPengganti('${pengganti.idKaryawan}')"><i class="fas fa-edit"></i></button>
+                        <button title="Hapus" onclick="handleHapusPengganti('${pengganti.idKaryawan}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+      });
+    }
+
+    function handleFormPenggantiSubmit(e) {
+      e.preventDefault();
+      console.log('handleFormPenggantiSubmit() called');
+
+      const idKaryawan = document.getElementById('pengganti-id-karyawan').value;
+      const durasi = parseInt(document.getElementById('pengganti-durasi').value);
+      const keterangan = document.getElementById('pengganti-keterangan').value;
+
+      console.log('Form values:', { idKaryawan, durasi, keterangan });
+
+      if (!idKaryawan || !durasi || !keterangan) {
+        Swal.fire('Gagal!', 'Semua field harus diisi.', 'error');
+        console.log('Validation failed: idKaryawan=' + idKaryawan + ', durasi=' + durasi + ', keterangan=' + keterangan);
+        return;
+      }
+
+      // Ambil nama karyawan dari dropdown
+      const selectKaryawan = document.getElementById('pengganti-id-karyawan');
+      const namaKaryawan = selectKaryawan.options[selectKaryawan.selectedIndex].text;
+
+      const dataPengganti = {
+        idKaryawan, durasi, keterangan
+      };
+
+      console.log('Sending data to backend:', dataPengganti);
+
+      // Show confirmation dialog sebelum simpan
+      Swal.fire({
+        title: '📲 Konfirmasi Pengiriman Libur Tambahan',
+        html: `
+                    <div style="text-align: left; background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 15px 0;">
+                        <p><strong>Karyawan:</strong> ${namaKaryawan}</p>
+                        <p><strong>Durasi Libur:</strong> ${durasi} hari</p>
+                        <p><strong>Keterangan:</strong> "${keterangan}"</p>
+                        <hr style="margin: 15px 0;">
+                        <p style="color: #4caf50; font-weight: bold;">
+                            ✅ Karyawan akan melihat notifikasi di dashboard mereka
+                        </p>
+                        <p style="color: #666; font-size: 13px;">
+                            Mereka dapat langsung mengambil libur ini dan status akan otomatis disetujui.
+                        </p>
+                    </div>
+                `,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: '✅ Kirim Notifikasi',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#4caf50'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({ title: 'Mengirim notifikasi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          google.script.run.withSuccessHandler(response => {
+            console.log('Backend response:', response);
+            if (response.startsWith('Error')) {
+              Swal.fire('Gagal!', response, 'error');
+            } else {
+              Swal.fire({
+                title: 'Berhasil! 🎉',
+                html: `
+                                    <p>${response}</p>
+                                    <p style="color: #4caf50; font-weight: bold; margin-top: 10px;">
+                                        ${namaKaryawan} akan melihat libur tambahan di dashboard mereka.
+                                    </p>
+                                `,
+                icon: 'success'
+              });
+              document.getElementById('form-pengganti').reset();
+              toggleTambahPenggantiForm();
+              muatDataPengganti();
+            }
+          }).withFailureHandler(error => {
+            console.error('Backend error:', error);
+            Swal.fire('Gagal!', 'Error dari backend: ' + error, 'error');
+          }).simpanPenggantiLibur(dataPengganti);
+        }
+      });
+    }
+
+    function handleHapusPengganti(idKaryawan) {
+      Swal.fire({
+        title: 'Anda yakin ingin menghapus?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          google.script.run.withSuccessHandler(response => {
+            if (response.startsWith('Error')) {
+              Swal.fire('Gagal!', response, 'error');
+            } else {
+              Swal.fire('Berhasil!', response, 'success');
+              muatDataPengganti();
+            }
+          }).hapusPenggantiLibur(idKaryawan);
+        }
+      });
+    }
+
+    function handleEditPengganti(idKaryawan) {
+      // Load data pengganti libur untuk karyawan tersebut
+      google.script.run.withSuccessHandler(data => {
+        console.log('Edit data received:', data);
+        if (data.error) {
+          Swal.fire('Gagal!', data.error, 'error');
+          return;
+        }
+        
+        // Set nilai ke form edit
+        document.getElementById('edit-pengganti-id-karyawan').value = data.idKaryawan;
+        document.getElementById('edit-pengganti-nama').value = data.namaKaryawan;
+        document.getElementById('edit-pengganti-durasi').value = data.durasi;
+        document.getElementById('edit-pengganti-keterangan').value = data.keterangan;
+        
+        // Tampilkan modal
+        document.getElementById('modal-edit-pengganti').style.display = 'block';
+      }).withFailureHandler(error => {
+        console.error('Error loading data:', error);
+        Swal.fire('Gagal!', 'Gagal memuat data: ' + error, 'error');
+      }).getPenggantiLiburById(idKaryawan);
+    }
+
+    function tutupModalEditPengganti() {
+      document.getElementById('modal-edit-pengganti').style.display = 'none';
+    }
+
+    function handleFormEditPenggantiSubmit(e) {
+      e.preventDefault();
+      console.log('handleFormEditPenggantiSubmit() called');
+      
+      const idKaryawan = document.getElementById('edit-pengganti-id-karyawan').value;
+      const durasi = parseInt(document.getElementById('edit-pengganti-durasi').value);
+      const keterangan = document.getElementById('edit-pengganti-keterangan').value;
+      const namaKaryawan = document.getElementById('edit-pengganti-nama').value;
+      
+      console.log('Form values:', { idKaryawan, durasi, keterangan });
+      
+      if (!idKaryawan || !durasi || !keterangan) {
+        Swal.fire('Gagal!', 'Semua field harus diisi.', 'error');
+        return;
+      }
+      
+      // Show confirmation dialog sebelum simpan
+      Swal.fire({
+        title: '📝 Konfirmasi Perubahan Libur',
+        html: `
+                    <div style="text-align: left; background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 15px 0;">
+                        <p><strong>Karyawan:</strong> ${namaKaryawan}</p>
+                        <p><strong>Durasi Libur Baru:</strong> ${durasi} hari</p>
+                        <p><strong>Keterangan:</strong> "${keterangan}"</p>
+                        <hr style="margin: 15px 0;">
+                        <p style="color: #1976d2; font-weight: bold;">
+                            ℹ️ Data pengganti libur akan segera diperbarui
+                        </p>
+                        <p style="color: #666; font-size: 13px;">
+                            Karyawan akan melihat informasi terbaru di dashboard mereka.
+                        </p>
+                    </div>
+                `,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: '✅ Simpan Perubahan',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#1976d2'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({ title: 'Menyimpan perubahan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          google.script.run.withSuccessHandler(response => {
+            console.log('Backend response:', response);
+            if (response.startsWith('Error')) {
+              Swal.fire('Gagal!', response, 'error');
+            } else {
+              Swal.fire({
+                title: 'Berhasil! 🎉',
+                html: `
+                                    <p>${response}</p>
+                                    <p style="color: #4caf50; font-weight: bold; margin-top: 10px;">
+                                        Data pengganti libur untuk ${namaKaryawan} telah diperbarui.
+                                    </p>
+                                `,
+                icon: 'success'
+              });
+              tutupModalEditPengganti();
+              muatDataPengganti();
+            }
+          }).withFailureHandler(error => {
+            console.error('Backend error:', error);
+            Swal.fire('Gagal!', 'Error dari backend: ' + error, 'error');
+          }).updatePenggantiLibur(idKaryawan, durasi, keterangan);
+        }
+      });
+    }
+
+    // Close modal when clicking outside of it
+    window.addEventListener('click', function (event) {
+      const modal = document.getElementById('modal-edit-pengganti');
+      if (event.target == modal) {
+        tutupModalEditPengganti();
+      }
+    });
+  </script>
+</body>
+
+</html>       
